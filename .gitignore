@@ -180,16 +180,16 @@ datasets/
 # ============================================
 
 # Virtual Environments for Frontend Serving
-FinSights/ModelPipeline/serving/frontend/venv_frontend/
-FinSights/ModelPipeline/finrag_ml_tg1/venv_ml_rag/
+ModelPipeline/serving/frontend/venv_frontend/
+ModelPipeline/finrag_ml_tg1/venv_ml_rag/
 
 # Notebooks
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.ipynb
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py
 # !ModelPipeline/finrag_ml_tg1/notebooks-experiments/README.md
 
-DataPipeline/src_aws_etl/notebooks/01_NB_DataMerge_SDKTest.ipynb
-FinSights/DataPipeline/src_aws_etl/data_exports_testing
+# DataPipeline/src_aws_etl/notebooks/01_NB_DataMerge_SDKTest.ipynb
+# DataPipeline/src_aws_etl/data_exports_testing
 
 # Large Embedding Cache Files
 ModelPipeline/finrag_ml_tg1/data_cache/embeddings/
