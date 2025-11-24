@@ -67,15 +67,16 @@ def init_rag_components(model_root: Path) -> RAGComponents:
     dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
     dim_sections = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_sec_sections.parquet"
 
-    # Metric JSON path
-    metric_json = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/downloaded_data.json"
+    # Metric JSON path -- JSON outdated, use parquet.
+    # metric_json = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/downloaded_data.json"
+    METRIC_DATA_FACT = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/KPI_FACT_DATA_EDGAR.parquet" 
 
     # 1) Entity adapter
     adapter = EntityAdapter(company_dim_path=dim_companies, section_dim_path=dim_sections)
 
     # 2) Metric pipeline
     metric_pipeline = MetricPipeline(
-        data_path=str(metric_json),
+        data_path=str(METRIC_DATA_FACT),
         company_dim_path=str(dim_companies),
     )
 

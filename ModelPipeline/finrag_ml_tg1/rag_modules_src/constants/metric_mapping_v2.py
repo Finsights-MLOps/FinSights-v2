@@ -20,154 +20,428 @@ tightly focused on semantic aliases -
     -  normalized into canonical metric IDs like income_stmt_Revenue, cash_flow_Operating Cash Flow, 
     Return on Assets (ROA) %, EPS, etc.
 """
+
+
+# ---------------------------------------------------------------------
+# Natural language -> metric_label (97 standardized labels)
+# ---------------------------------------------------------------------
+
+"""
+Maps natural language queries to exact metric_label values in KPI_FACT_DATA_EDGAR.parquet
+Covers all 97 available metrics including derived ratios and GAAP line items
+"""
+
 METRIC_MAPPINGS = {
-    # Revenue / sales
-    'revenue': 'income_stmt_Revenue',
-    'revenues': 'income_stmt_Revenue',
-    'total revenue': 'income_stmt_Revenue',
-    'total revenues': 'income_stmt_Revenue',
-    'sales': 'income_stmt_Revenue',
-    'total sales': 'income_stmt_Revenue',
-    'net sales': 'income_stmt_Revenue',
-    'net revenue': 'income_stmt_Revenue',
-    'net revenues': 'income_stmt_Revenue',
-    'sales revenue': 'income_stmt_Revenue',
-    'product revenue': 'income_stmt_Revenue',
-    'service revenue': 'income_stmt_Revenue',
-    'top line': 'income_stmt_Revenue',
+    # ===================================================================
+    # CORE INCOME STATEMENT METRICS
+    # ===================================================================
+    
+    # Revenue (primary metric)
+    'revenue': 'Revenue',
+    'revenues': 'Revenue',
+    'total revenue': 'Revenue',
+    'total revenues': 'Revenue',
+    'sales': 'Revenue',
+    'total sales': 'Revenue',
+    'top line': 'Revenue',
+    'sales revenue': 'Revenue',
+    
+    # Net Revenue variant
+    'net revenue': 'Net Revenue',
+    'net revenues': 'Net Revenue',
+    'net sales': 'Net Revenue',
+    
+    # Gross Revenue variant
+    'gross revenue': 'Gross Revenue',
+    'gross revenues': 'Gross Revenue',
+    'gross sales': 'Gross Revenue',
+    
+    # Net Income (primary profit metric)
+    'net income': 'Net Income',
+    'net earnings': 'Net Income',
+    'earnings': 'Net Income',
+    'profit': 'Net Income',
+    'net profit': 'Net Income',
+    'bottom line': 'Net Income',
+    'income': 'Net Income',
+    'net loss': 'Net Income',  # Same metric, negative value
+    
+    # Net Income variants (specialized)
+    'net income common basic': 'Net Income Available to Common - Basic',
+    'net income common': 'Net Income Available to Common - Basic',
+    'net income basic': 'Net Income Available to Common - Basic',
+    'earnings per common basic': 'Net Income Available to Common - Basic',
+    
+    'net income common diluted': 'Net Income Available to Common - Diluted',
+    'net income diluted': 'Net Income Available to Common - Diluted',
+    'diluted net income': 'Net Income Available to Common - Diluted',
+    
+    'net income parent diluted': 'Net Income Attributable to Parent - Diluted',
+    'parent net income': 'Net Income Attributable to Parent - Diluted',
+    
+    'net income nci': 'Net Income - Noncontrolling Interest',
+    'noncontrolling interest income': 'Net Income - Noncontrolling Interest',
+    
+    'net income nonredeemable nci': 'Net Income - Nonredeemable NCI',
+    'net income redeemable nci': 'Net Income - Redeemable NCI',
+    'net income including nci': 'Net Income - Including Nonredeemable NCI',
+    
+    # LP Unit metrics
+    'net income lp': 'Net Income per LP Unit (Basic)',
+    'income per lp unit': 'Net Income per LP Unit (Basic)',
+    'net income lp basic diluted': 'Net Income per LP Unit (Basic & Diluted)',
+    
+    # Gross Profit
+    'gross profit': 'Gross Profit',
+    'gross income': 'Gross Profit',
+    'gross margin dollars': 'Gross Profit',
+    'gross margins': 'Gross Profit',  
+    'gross profit margin': 'Gross Profit',
+    'gross profit margins': 'Gross Profit',  
+    'gp': 'Gross Profit',
+    
+    'gross profit disposal': 'Gross Profit (Disposal Group)',
+    
+    # ===================================================================
+    # CASH FLOW METRICS
+    # ===================================================================
+    
+    # Operating Cash Flow (primary)
+    'operating cash flow': 'Operating Cash Flow',
+    'operating cash flows': 'Operating Cash Flow',  
+    'cash flows': 'Operating Cash Flow',            
+    'cash flow from operations': 'Operating Cash Flow',
+    'cash flows from operations': 'Operating Cash Flow',  
+    'cash flow operations': 'Operating Cash Flow',
+    'ocf': 'Operating Cash Flow',
+    'cfo': 'Operating Cash Flow',
+    'cash from operations': 'Operating Cash Flow',
+    'operating activities': 'Operating Cash Flow',
+    'cash provided by operating activities': 'Operating Cash Flow',
+    'net cash operating': 'Operating Cash Flow',
+    'cashflow': 'Operating Cash Flow',
+    'cash flow': 'Operating Cash Flow',
+    
+    # Continuing Ops variant
+    'operating cash flow continuing': 'Operating Cash Flow - Continuing Ops',
+    'ocf continuing operations': 'Operating Cash Flow - Continuing Ops',
+    
+    # ===================================================================
+    # BALANCE SHEET - EQUITY
+    # ===================================================================
+    
+    # Stockholders Equity (primary)
+    'stockholders equity': 'Stockholders\' Equity',
+    'shareholders equity': 'Stockholders\' Equity',
+    'stockholder equity': 'Stockholders\' Equity',
+    'shareholder equity': 'Stockholders\' Equity',
+    'total equity': 'Stockholders\' Equity',
+    'equity': 'Stockholders\' Equity',
+    'book value': 'Stockholders\' Equity',
+    'net worth': 'Stockholders\' Equity',
+    
+    # Equity variants
+    'equity including nci': 'Equity Including NCI',
+    'equity with nci': 'Equity Including NCI',
+    'equity noncontrolling': 'Equity Including NCI',
+    
+    'other equity': 'Other Stockholders\' Equity',
+    'other stockholders equity': 'Other Stockholders\' Equity',
+    
+    'equity shares': 'Other Equity Shares',
+    'other equity shares': 'Other Equity Shares',
+    
+    'stock split': 'Equity - Stock Split Conversion',
+    'stock split conversion': 'Equity - Stock Split Conversion',
+    
+    # ===================================================================
+    # BALANCE SHEET - LIABILITIES
+    # ===================================================================
+    
+    # Generic liabilities
+    'liabilities': 'Other Liabilities',
+    'total liabilities': 'Liabilities & Stockholders\' Equity',
+    'liabilities equity': 'Liabilities & Stockholders\' Equity',
+    'liabilities and equity': 'Liabilities & Stockholders\' Equity',
+    
+    'other liabilities': 'Other Liabilities',
+    'other liabilities noncurrent': 'Other Liabilities (Noncurrent)',
+    'other liabilities current': 'Other Liabilities Current',
+    'other liabilities fair value': 'Other Liabilities - Fair Value',
+    'other liabilities disposal': 'Other Liabilities - Disposal Group',
+    
+    'sundry liabilities': 'Other Sundry Liabilities',
+    'sundry liabilities noncurrent': 'Other Sundry Liabilities (Noncurrent)',
+    
+    'accrued liabilities': 'Other Accrued Liabilities (Current)',
+    'accrued liabilities current': 'Other Accrued Liabilities (Current)',
+    
+    # Derivative liabilities
+    'derivative liabilities': 'Derivative Liabilities (Current)',
+    'derivative liabilities current': 'Derivative Liabilities (Current)',
+    
+    # Employee liabilities
+    'employee liabilities': 'Employee-Related Liabilities (Total)',
+    'employee liabilities total': 'Employee-Related Liabilities (Total)',
+    'employee liabilities current': 'Employee-Related Liabilities (Current)',
+    
+    # Pension liabilities
+    'pension liabilities': 'Pension & Benefit Liabilities (Total)',
+    'pension benefits': 'Pension & Benefit Liabilities (Total)',
+    'pension liabilities noncurrent': 'Pension & Postretirement Liabilities - Noncurrent',
+    'postretirement liabilities': 'Pension & Postretirement Liabilities - Noncurrent',
+    
+    # Business combination
+    'liabilities assumed': 'Business Combination - Liabilities Assumed',
+    'acquisition liabilities': 'Business Combination - Liabilities Assumed',
+    'noncash liabilities assumed': 'Non-cash Liabilities Assumed',
+    
+    # Disposal group liabilities
+    'disposal liabilities current': 'Current Liabilities - Disposal Group',
+    
+    # ===================================================================
+    # BALANCE SHEET - ASSETS
+    # ===================================================================
+    
+    # Other assets
+    'other assets noncurrent': 'Other Assets (Noncurrent)',
+    'other noncurrent assets': 'Other Assets (Noncurrent)',
+    'other assets current': 'Other Current Assets',
+    'other current assets': 'Other Current Assets',
+    'other assets fair value': 'Other Assets - Fair Value',
+    'other assets disposal': 'Other Assets - Disposal Group',
+    
+    'miscellaneous assets': 'Miscellaneous Assets (Noncurrent)',
+    'misc assets noncurrent': 'Miscellaneous Assets (Noncurrent)',
+    
+    # Prepaid expenses
+    'prepaid expenses': 'Prepaid Expenses (Current)',
+    'prepaid': 'Prepaid Expenses (Current)',
+    
+    # Intangible assets
+    'intangible assets gross': 'Intangible Assets (Gross, Excluding Goodwill)',
+    'intangibles gross': 'Intangible Assets (Gross, Excluding Goodwill)',
+    'intangible assets': 'Intangible Assets (Gross, Excluding Goodwill)',
+    
+    # Impairments
+    'impairment intangibles': 'Impairment - Indefinite-Lived Intangibles',
+    'intangible impairment': 'Impairment - Indefinite-Lived Intangibles',
+    'impairment long lived': 'Impairment - Long-Lived Assets',
+    'asset impairment': 'Impairment - Long-Lived Assets',
+    
+    # Amortization
+    'amortization year 5': 'Amortization Expense - Year 5',
+    
+    # Change in assets
+    'change other assets': 'Change in Other Assets',
+    
+    # Disposal group assets
+    'disposal assets current': 'Current Assets - Disposal Group',
+    
+    # Securities
+    'securities loaned': 'Securities Loaned',
+    'loaned securities': 'Securities Loaned',
+    
+    # Separate accounts
+    'separate account assets': 'Separate Account Assets',
+    
+    # ===================================================================
+    # DERIVED RATIOS & MARGINS
+    # ===================================================================
+    
+    # Return ratios
+    'return on assets': 'ROA % (Avg Assets)',
+    'roa': 'ROA % (Avg Assets)',
+    'roa percent': 'ROA % (Avg Assets)',
+    'return on average assets': 'ROA % (Avg Assets)',
+    
+    'return on equity': 'ROE % (Avg Equity)',
+    'roe': 'ROE % (Avg Equity)',
+    'roe percent': 'ROE % (Avg Equity)',
+    'return on average equity': 'ROE % (Avg Equity)',
+    
+    # Margin ratios
+    'operating margin': 'Operating Margin %',
+    'operating margin percent': 'Operating Margin %',
+    'ebit margin': 'Operating Margin %',
+    'op margin': 'Operating Margin %',
+    
+    'net profit margin': 'Net Profit Margin %',
+    'net margin': 'Net Profit Margin %',
+    'profit margin': 'Net Profit Margin %',
+    'npm': 'Net Profit Margin %',
+    
+    'gross profit margin': 'Gross Profit',  # Note: Use dollars, not % in data
+    'gross margin': 'Gross Profit',
+    
+    # Debt ratios
+    'debt to assets': 'Debt-to-Assets',
+    'debt to asset ratio': 'Debt-to-Assets',
+    'debt assets': 'Debt-to-Assets',
+    'total debt levels': 'Debt-to-Assets',        
+    'debt levels': 'Debt-to-Assets',               
+    'total debt': 'Debt-to-Assets',                
+    'debt': 'Debt-to-Assets',                      
 
-    # Income / profit
-    'net income': 'income_stmt_Net Income',
-    'net earnings': 'income_stmt_Net Income',
-    'earnings': 'income_stmt_Net Income',
-    'profit': 'income_stmt_Net Income',
-    'net profit': 'income_stmt_Net Income',
-    'bottom line': 'income_stmt_Net Income',
-    'income': 'income_stmt_Net Income',
-    'income attributable': 'income_stmt_Net Income',
-    'earnings attributable': 'income_stmt_Net Income',
-    'income from continuing operations': 'income_stmt_Net Income',
-    'earnings from continuing operations': 'income_stmt_Net Income',
-    # treat "net loss" as the same metric with negative sign
-    'net loss': 'income_stmt_Net Income',
+    'debt to equity': 'Debt-to-Equity',
+    'debt to equity ratio': 'Debt-to-Equity',
+    'debt equity': 'Debt-to-Equity',
+    'leverage ratio': 'Debt-to-Equity',
+    'leverage': 'Debt-to-Equity',
+    
+    # Cost of Goods Sold - NOT AVAILABLE, map to closest proxy
+    'cost of goods sold': 'Gross Profit',         
+    'cogs': 'Gross Profit',                        
+    'cost of sales': 'Gross Profit',               
+    'cost of revenue': 'Gross Profit',
 
-    # Operating income
-    'operating income': 'income_stmt_Operating Income',
-    'income from operations': 'income_stmt_Operating Income',
-    'income from operation': 'income_stmt_Operating Income',
-    'operating profit': 'income_stmt_Operating Income',
-    'operating loss': 'income_stmt_Operating Income',
-    'operating margin': 'income_stmt_Operating Income',
-    'results of operations': 'income_stmt_Operating Income',
-
-    # Assets
-    'total assets': 'balance_sheet_Total Assets',
-    'assets': 'balance_sheet_Total Assets',
-    'current assets': 'balance_sheet_Current Assets',
-
-    # Liabilities / debt
-    'total liabilities': 'balance_sheet_Total Liabilities',
-    'liabilities': 'balance_sheet_Total Liabilities',
-    'current liabilities': 'balance_sheet_Current Liabilities',
-    'long term debt': 'balance_sheet_Total Liabilities',
-    'short term borrowings': 'balance_sheet_Total Liabilities',
-    'total debt': 'balance_sheet_Total Liabilities',
-
-    # Equity
-    'stockholders equity': 'balance_sheet_Stockholders Equity',
-    'shareholders equity': 'balance_sheet_Stockholders Equity',
-    'stockholder equity': 'balance_sheet_Stockholders Equity',
-    'shareholder equity': 'balance_sheet_Stockholders Equity',
-    'total equity': 'balance_sheet_Stockholders Equity',
-    'equity': 'balance_sheet_Stockholders Equity',
-
-    # Cash flow (operating / investing / financing)
-    'operating cash flow': 'cash_flow_Operating Cash Flow',
-    'cash flow from operations': 'cash_flow_Operating Cash Flow',
-    'cash flows from operating activities': 'cash_flow_Operating Cash Flow',
-    'cash provided by operating activities': 'cash_flow_Operating Cash Flow',
-    'cash generated from operations': 'cash_flow_Operating Cash Flow',
-    'net cash provided by operating activities': 'cash_flow_Operating Cash Flow',
-    'cash from operations': 'cash_flow_Operating Cash Flow',
-    'operating activities cash flows': 'cash_flow_Operating Cash Flow',
-    'cashflow': 'cash_flow_Operating Cash Flow',
-    'cash flow': 'cash_flow_Operating Cash Flow',
-
-    'investing cash flow': 'cash_flow_Investing Cash Flow',
-    'cash flow from investing activities': 'cash_flow_Investing Cash Flow',
-    'cash used in investing activities': 'cash_flow_Investing Cash Flow',
-
-    'financing cash flow': 'cash_flow_Financing Cash Flow',
-    'cash flow from financing activities': 'cash_flow_Financing Cash Flow',
-    'cash used in financing activities': 'cash_flow_Financing Cash Flow',
-
-    # Other income-statement metrics
-    'gross profit': 'income_stmt_Gross Profit',
-    'gross income': 'income_stmt_Gross Profit',
-
-    'operating expenses': 'income_stmt_Operating Expenses',
-    'operating expense': 'income_stmt_Operating Expenses',
-    'selling general and administrative': 'income_stmt_Operating Expenses',
-    'sga': 'income_stmt_Operating Expenses',
-    'sgna': 'income_stmt_Operating Expenses',
-    'sg&a': 'income_stmt_Operating Expenses',
-
-    'cost of revenue': 'income_stmt_Cost of Revenue',
-    'cost of revenues': 'income_stmt_Cost of Revenue',
-    'cost of sales': 'income_stmt_Cost of Revenue',
-    'cogs': 'income_stmt_Cost of Revenue',
-
-    'interest expense': 'income_stmt_Interest Expense',
-    'interest expenses': 'income_stmt_Interest Expense',
-    'net interest expense': 'income_stmt_Interest Expense',
-
-    'provision for income tax': 'income_stmt_Provision for Income Tax',
-    'income tax expense': 'income_stmt_Provision for Income Tax',
-    'tax expense': 'income_stmt_Provision for Income Tax',
-    'taxes': 'income_stmt_Provision for Income Tax',
-    'income tax': 'income_stmt_Provision for Income Tax',
-    'tax': 'income_stmt_Provision for Income Tax',
-
-    # EPS / per-share metrics (canonical label left as generic "EPS" for now)
-    'earnings per share': 'EPS',
-    'earnings per diluted share': 'EPS',
-    'earnings per basic share': 'EPS',
-    'eps': 'EPS',
-    'basic eps': 'EPS',
-    'diluted eps': 'EPS',
-
-    # Ratios (same naming style you already used)
-    'return on assets': 'Return on Assets (ROA) %',
-    'roa': 'Return on Assets (ROA) %',
-    'gross profit margin': 'Gross Profit Margin %',
-    'gross margin': 'Gross Profit Margin %',
+    # ===================================================================
+    # TAX-RELATED METRICS (Deferred Tax Assets/Liabilities)
+    # ===================================================================
+    
+    # DTA - Net
+    'deferred tax assets net': 'Deferred Income Tax Assets - Net',
+    'dta net': 'Deferred Income Tax Assets - Net',
+    'net deferred tax assets': 'Deferred Income Tax Assets - Net',
+    
+    # DTA - NOL (Net Operating Loss)
+    'deferred tax nol': 'Deferred Tax Assets - NOL',
+    'dta nol': 'Deferred Tax Assets - NOL',
+    'nol deferred tax': 'Deferred Tax Assets - NOL',
+    
+    'dta nol domestic': 'Deferred Tax Assets - NOL Domestic',
+    'deferred tax nol domestic': 'Deferred Tax Assets - NOL Domestic',
+    
+    'dta nol foreign': 'Deferred Tax Assets - NOL Foreign',
+    'deferred tax nol foreign': 'Deferred Tax Assets - NOL Foreign',
+    
+    'dta nol state local': 'Deferred Tax Assets - NOL State/Local',
+    'deferred tax nol state': 'Deferred Tax Assets - NOL State/Local',
+    
+    # DTA - Other categories
+    'dta derivatives': 'Deferred Tax Assets - Derivatives',
+    'deferred tax assets derivatives': 'Deferred Tax Assets - Derivatives',
+    
+    'dta ppe': 'Deferred Tax Assets - PPE',
+    'deferred tax assets ppe': 'Deferred Tax Assets - PPE',
+    
+    'dta deferred income': 'Deferred Tax Assets - Deferred Income',
+    
+    'dta iprd': 'Deferred Tax Assets - IPR&D',
+    'dta research development': 'Deferred Tax Assets - IPR&D',
+    
+    'dta oci loss': 'Deferred Tax Assets - OCI Loss',
+    'deferred tax oci': 'Deferred Tax Assets - OCI Loss',
+    
+    'dta unrealized losses': 'Deferred Tax Assets - Unrealized Losses (AFS)',
+    
+    'dta capital loss': 'Deferred Tax Assets - Capital Loss CF',
+    
+    'dta other': 'Deferred Tax Assets - Other',
+    
+    # DTL - Deferred Tax Liabilities
+    'dtl derivatives': 'Deferred Tax Liabilities - Derivatives',
+    'deferred tax liabilities derivatives': 'Deferred Tax Liabilities - Derivatives',
+    
+    'dtl ppe': 'Deferred Tax Liabilities - PPE',
+    'deferred tax liabilities ppe': 'Deferred Tax Liabilities - PPE',
+    
+    'dtl goodwill intangibles': 'Deferred Tax Liabilities - Goodwill & Intangibles',
+    'deferred tax goodwill': 'Deferred Tax Liabilities - Goodwill & Intangibles',
+    
+    'dtl noncontrolled affiliates': 'Deferred Tax Liabilities - Noncontrolled Affiliates',
+    
+    'dtl undistributed foreign': 'Deferred Tax Liabilities - Undistributed Foreign Earnings',
+    'deferred tax foreign earnings': 'Deferred Tax Liabilities - Undistributed Foreign Earnings',
+    
+    'dtl unrealized gains': 'Deferred Tax Liabilities - Unrealized Gains (Trading)',
+    
+    # Combined deferred tax line items
+    'deferred taxes other assets current': 'Deferred Taxes & Other Assets (Current)',
+    'deferred taxes other liabilities': 'Deferred Tax And Other Liabilities (Noncurrent)',
+    'deferred income taxes liabilities': 'Deferred Income Taxes And Other Liabilities (Noncurrent)',
+    
+    # Tax valuation allowance
+    'tax valuation allowance': 'Deferred Tax Asset Valuation Allowance Change',
+    'valuation allowance change': 'Deferred Tax Asset Valuation Allowance Change',
+    'tax rate valuation allowance': 'Tax Rate - Change in Valuation Allowance',
+    
+    # ===================================================================
+    # CAPITAL EXPENDITURES & ASSET TRANSACTIONS
+    # ===================================================================
+    
+    # Payments for assets
+    'capex productive': 'Payments to Acquire Productive Assets',
+    'capital expenditures': 'Payments to Acquire Productive Assets',
+    'capex': 'Payments to Acquire Productive Assets',
+    
+    'capex intangibles': 'Payments to Acquire Intangible Assets',
+    'intangibles': 'Payments to Acquire Intangible Assets',
+    'capex': 'Payments to Acquire Intangible Assets',
+    'intangible capex': 'Payments to Acquire Intangible Assets',
+    
+    'net payments productive': 'Net Payments/Proceeds - Productive Assets',
+    'net capex': 'Net Payments/Proceeds - Productive Assets',
+    
+    # Proceeds from sales
+    'proceeds productive': 'Proceeds from Productive Asset Sales',
+    'asset sale proceeds': 'Proceeds from Productive Asset Sales',
+    
+    'proceeds other assets': 'Proceeds from Other Asset Sales (Investing)',
+    
+    'proceeds businesses': 'Proceeds from Sale of Businesses / Assets',
+    'business sale proceeds': 'Proceeds from Sale of Businesses / Assets',
+    
+    # Segment capex
+    'segment capex': 'Segment Additions to Long-Lived Assets',
+    'segment additions': 'Segment Additions to Long-Lived Assets',
+    
+    # ===================================================================
+    # VARIABLE INTEREST ENTITIES (VIE)
+    # ===================================================================
+    
+    'vie assets': 'VIE Consolidated Assets',
+    'vie consolidated assets': 'VIE Consolidated Assets',
+    
+    'vie liabilities': 'VIE Consolidated Liabilities',
+    'vie consolidated liabilities': 'VIE Consolidated Liabilities',
+    
+    'vie liabilities no recourse': 'VIE Liabilities (No Recourse)',
+    
+    'vie assets pledged': 'VIE Assets Pledged',
+    'vie pledged assets': 'VIE Assets Pledged',
+    
+    'vie nonconsolidated assets': 'VIE Non-consolidated Assets',
+    
+    # ===================================================================
+    # OTHER SPECIALIZED METRICS
+    # ===================================================================
+    
+    # Financial transfers
+    'financial asset transfers': 'Financial Asset Transfers Derecognized',
+    'asset transfers derecognized': 'Financial Asset Transfers Derecognized',
+    
+    # Share-based payments
+    'share based liabilities paid': 'Share-based Payment Liabilities Paid',
+    'stock compensation paid': 'Share-based Payment Liabilities Paid',
 }
 
-# ---------------------------------------------------------------------
-# 2) Base metric keywords (for quick pre-filtering)
-# ---------------------------------------------------------------------
-
-METRIC_KEYWORDS = [
-    'assets', 'bottom line', 'capex', 'capital expenditure', 'capital expenditures', 'cash flow', 
-    'cash flows', 'cashflow', 'cost', 'tax', 'debt', 'earnings', 'earnings per share', 'ebit', 'ebitda', 'eps', 'equity',
-    'expenses', 'free cash flow', 'gross margin', 'gross profit', 'income', 'income tax', 'interest expense', 
-    'leverage', 'liabilities', 'loss', 'market cap', 'operating', 'investing', 'financing', 'margin', 
-    'market capitalization', 'net income', 'operating cash flow', 'operating income', 'operating margin', 
-    'operating profit', 'profit', 'revenue', 'revenues', 'sales', 'top line', 'topline',
-]
 
 # ---------------------------------------------------------------------
-# 3) Quantitative “question shape” indicators in user queries
+# 2) Metric keywords for quick detection (no mapping needed)
+# ---------------------------------------------------------------------
+
+METRIC_KEYWORDS = list(METRIC_MAPPINGS.keys())
+
+# ---------------------------------------------------------------------
+# 3) Quantitative indicators (triggers metric layer)
 # ---------------------------------------------------------------------
 
 QUANTITATIVE_INDICATORS = [
-    'amount', 'by how much', 'change in', 'decrease in', 'how big', 'how large', 'how many', 'how much', 'increase in',
-    'number', 'percent of', 'percentage of', 'total', 'value', 'volume', 'what amount', 'what are', 'what figure', 
-    'what is', 'what percent', 'what percentage', 'what was', 'what were',
+    'how much', 'what was', 'what were', 'show me', 'compare',
+    'trend', 'growth', 'increase', 'decrease', 'change',
+    'performance', 'financial', 'report', 'results'
 ]
-
-
-
 
 
 

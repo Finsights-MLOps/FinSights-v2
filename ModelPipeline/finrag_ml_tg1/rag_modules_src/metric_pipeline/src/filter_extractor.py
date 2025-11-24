@@ -14,7 +14,10 @@ from __future__ import annotations
 import re
 from typing import Optional, Dict, List
 from pathlib import Path 
-from finrag_ml_tg1.rag_modules_src.metric_pipeline.config.metric_mappings import ( METRIC_MAPPINGS, ) 
+# old dont use: // # from finrag_ml_tg1.rag_modules_src.metric_pipeline.config.metric_mappings import ( METRIC_MAPPINGS, ) 
+
+# ModelPipeline\finrag_ml_tg1\rag_modules_src\constants\metric_mapping_v2.py
+from finrag_ml_tg1.rag_modules_src.constants.metric_mapping_v2 import ( METRIC_MAPPINGS, )
 from finrag_ml_tg1.rag_modules_src.entity_adapter.company_universe import ( CompanyUniverse, ) 
 from finrag_ml_tg1.rag_modules_src.entity_adapter.company_extractor import ( CompanyExtractor, ) 
 from finrag_ml_tg1.rag_modules_src.entity_adapter.string_utils import simple_fuzzy_match

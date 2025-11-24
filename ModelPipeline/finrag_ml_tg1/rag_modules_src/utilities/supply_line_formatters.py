@@ -16,22 +16,67 @@ from typing import Dict, Any
 from collections import defaultdict
 
 
-def format_value_compact(value: float) -> str:
+def format_value_compact(value: float, metric_label: str = None) -> str:
     """
-    Format financial values compactly using B/M/K suffixes.
+    Format financial values with intelligent type detection.
     
     Args:
-        value: Numeric value (e.g., revenue in dollars)
+        value: Numeric value
+        metric_label: Optional metric name for type detection
     
     Returns:
-        Compact string like "$394.3B", "$1.5M", "$250K"
+        Formatted string: "$394.3B", "17%", "0.54", etc.
     
     Examples:
-        >>> format_value_compact(394328000000)
+        >>> format_value_compact(394328000000, "Revenue")
         '$394.3B'
-        >>> format_value_compact(1500000)
-        '$1.5M'
+        >>> format_value_compact(17, "ROA % (Avg Assets)")
+        '17.0%'
+        >>> format_value_compact(0.545, "Debt-to-Assets")
+        '0.55'
     """
+    # ===================================================================
+    # TYPE DETECTION: Percentage, Ratio, or Currency
+    # ===================================================================
+    
+    if metric_label:
+        metric_lower = metric_label.lower()
+        
+        # 1. PERCENTAGE METRICS (contains % symbol or "percent")
+        if '%' in metric_label or 'percent' in metric_lower:
+            return f"{value:.1f}%"
+        
+        # 2. RATIO METRICS (contains specific keywords)
+        ratio_keywords = [
+            '-to-',           # Debt-to-Assets, Debt-to-Equity
+            'ratio',          # Any ratio
+            'margin %',       # Already handled above but safe fallback
+            'per unit',       # Per LP Unit metrics
+            'per share',      # EPS-type metrics
+        ]
+        
+        if any(keyword in metric_lower for keyword in ratio_keywords):
+            # Ratios typically displayed as decimals (2-4 decimal places)
+            if abs(value) < 10:
+                return f"{value:.2f}"  # 0.54, 1.23
+            else:
+                return f"{value:.1f}"  # 12.3
+    
+    # ===================================================================
+    # CURRENCY FORMATTING (default)
+    # ===================================================================
+    
+    # Special case: Small absolute values without metric label context
+    # Might be ratios/multipliers - show as decimal
+    if metric_label is None and abs(value) < 100:
+        if abs(value) < 1:
+            return f"{value:.3f}"  # 0.545
+        elif abs(value) < 10:
+            return f"{value:.2f}"  # 5.43
+        else:
+            return f"{value:.1f}"  # 54.3
+    
+    # Standard currency formatting
     if abs(value) >= 1_000_000_000:
         return f"${value/1_000_000_000:.1f}B"
     elif abs(value) >= 1_000_000:
@@ -40,6 +85,9 @@ def format_value_compact(value: float) -> str:
         return f"${value/1_000:.0f}K"
     else:
         return f"${value:.0f}"
+
+
+
 
 def format_analytical_compact(
     raw_result: Dict[str, Any],
@@ -56,7 +104,7 @@ def format_analytical_compact(
               - 'query': str (optional)
               - 'filters': {'tickers': [...], 'years': [...], 'metrics': [...]}
               - 'data': list of rows with keys:
-                    'ticker', 'year', 'metric', 'value', 'found'
+                    'ticker', 'year', 'metric_label', 'value', 'found'
               - 'stats': optional {'found_with_values', 'total_combinations'}
         entity_meta:
             Optional dictionary with entity-level scope, e.g.:
@@ -74,7 +122,7 @@ def format_analytical_compact(
         Empty string if success is False or no data rows.
     """
     # ------------------------------------------------------------------
-    # Handle failure / empty cases exactly like a compact formatter
+    # Handle failure / empty cases
     # ------------------------------------------------------------------
     if not raw_result.get("success"):
         return ""
@@ -89,7 +137,7 @@ def format_analytical_compact(
     filters = raw_result.get("filters", {}) or {}
     tickers = filters.get("tickers", []) or []
     years = sorted(filters.get("years", []) or [])
-    metric_ids = filters.get("metrics", []) or []
+    metric_labels = filters.get("metrics", []) or []
 
     stats = raw_result.get("stats", {}) or {}
     combos_found = stats.get("found_with_values")
@@ -101,19 +149,8 @@ def format_analytical_compact(
     ent_years = entity_meta.get("years") or []
     ent_sections = entity_meta.get("sections") or []
 
-    # Metric ID → short label
-    def short_metric_name(metric_id: str) -> str:
-        if not metric_id:
-            return ""
-        base = (
-            metric_id.replace("income_stmt_", "")
-                     .replace("balance_sheet_", "")
-                     .replace("cash_flow_", "")
-        )
-        return base.replace("_", " ")
-
     # ------------------------------------------------------------------
-    # Group data: ticker → year → {metric_id: value}
+    # Group data: ticker → year → {metric_label: value}
     # ------------------------------------------------------------------
     grouped = defaultdict(lambda: defaultdict(dict))
 
@@ -122,19 +159,19 @@ def format_analytical_compact(
             continue
         ticker = item.get("ticker")
         year = item.get("year")
-        metric_id = item.get("metric")
+        metric_label = item.get("metric_label") or item.get("metric")  # ✅ FIXED
         value = item.get("value")
 
-        if ticker is None or year is None or metric_id is None or value is None:
+        if ticker is None or year is None or metric_label is None or value is None:
             continue
 
-        grouped[ticker][year][metric_id] = value
+        grouped[ticker][year][metric_label] = value
 
     if not grouped:
         return ""
 
     # ------------------------------------------------------------------
-    # Build header -- KPI block header
+    # Build header
     # ------------------------------------------------------------------
     header_lines = [
         "══════════════════════════════════════════════════════════════════════",
@@ -143,14 +180,8 @@ def format_analytical_compact(
         "",
     ]
 
-    # # QUERY AT TOP LOGIC REMOVED HERE.
-    # # Place the source query BEFORE the KPI header
-    # query_text = raw_result.get("query")
-    # if query_text:
-    #     header_lines.append(f"Source query: {query_text}")
-    #     header_lines.append("")
-
     header_lines.append("Scope:")
+    
     # Entity-side view (optional)
     if ent_companies or ent_years or ent_sections:
         if ent_companies:
@@ -175,7 +206,7 @@ def format_analytical_compact(
     )
     header_lines.append(
         "  Metrics:              "
-        + (", ".join(short_metric_name(m) for m in metric_ids) or "(none)")
+        + (", ".join(metric_labels) or "(none)")  # ✅ FIXED - already clean labels
     )
 
     if combos_found is not None and combos_total is not None:
@@ -200,18 +231,17 @@ def format_analytical_compact(
             metric_map = grouped[ticker][year]
 
             # Order metrics according to filter order, then any extras
-            ordered_metric_ids = list(metric_ids)
-            for m_id in metric_map.keys():
-                if m_id not in ordered_metric_ids:
-                    ordered_metric_ids.append(m_id)
+            ordered_metrics = list(metric_labels)
+            for m_label in metric_map.keys():
+                if m_label not in ordered_metrics:
+                    ordered_metrics.append(m_label)
 
             parts = []
-            for m_id in ordered_metric_ids:
-                if m_id not in metric_map:
+            for m_label in ordered_metrics:
+                if m_label not in metric_map:
                     continue
-                label = short_metric_name(m_id)
-                value_str = format_value_compact(metric_map[m_id])
-                parts.append(f"{label}={value_str}")
+                value_str = format_value_compact(metric_map[m_label], m_label)  
+                parts.append(f"{m_label}={value_str}")  # ✅ FIXED - use label directly
 
             if parts:
                 body_lines.append(f"  {year}: " + ", ".join(parts))
@@ -219,7 +249,6 @@ def format_analytical_compact(
         body_lines.append("")  # blank line between companies
 
     return "\n".join(header_lines + body_lines)
-
 
 
 

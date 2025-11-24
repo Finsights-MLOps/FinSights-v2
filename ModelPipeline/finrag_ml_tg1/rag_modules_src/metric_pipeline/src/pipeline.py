@@ -16,7 +16,9 @@ import re
 
 from .filter_extractor import FilterExtractor
 from .metric_lookup import MetricLookup
-from finrag_ml_tg1.rag_modules_src.metric_pipeline.config.metric_mappings import (
+
+# # ModelPipeline\finrag_ml_tg1\rag_modules_src\constants\metric_mapping_v2.py
+from finrag_ml_tg1.rag_modules_src.constants.metric_mapping_v2 import (
     METRIC_KEYWORDS,
     QUANTITATIVE_INDICATORS,
 )
@@ -229,8 +231,10 @@ class MetricPipeline:
                 
                 for data in by_company[ticker][year]:
                     value = data['value']
-                    metric_name = data['metric'].replace('_', ' ')
-                    
+
+                    ## metric_name = data['metric'].replace('_', ' ')
+                    metric_name = data['metric_label']
+
                     # Format value based on magnitude
                     if abs(value) >= 1_000_000_000:
                         formatted_value = f"${value/1_000_000_000:.2f}B"

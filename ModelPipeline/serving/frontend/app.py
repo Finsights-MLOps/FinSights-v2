@@ -138,12 +138,13 @@ with st.sidebar:
         
         *"How does MICROSOFT CORP describe the change in its Intelligent Cloud revenue in 2017, including both the direction and magnitude of the change?"*
         
+        *"Show me Apple, Microsoft, Amazon, Alphabet, Google, and Tesla's financial performance from 2018 to 2022. I need their total sales, bottom line profits, operating cash flows, gross margins, total debt levels, shareholder equity, cost of goods sold, tax expenses, return on assets, and earnings per share. How did these companies explain their revenue growth and profitability trends in their MD&A sections, and what supply chain or competitive risks did they highlight in their Risk Factors?"*
+                
         **Guidelines:**
         - 10-500 characters
         - Takes 10-15 seconds
-        - Cost: ~$0.01/query
+        - Cost: ~$0.017/query
         """)
-
 
 
 

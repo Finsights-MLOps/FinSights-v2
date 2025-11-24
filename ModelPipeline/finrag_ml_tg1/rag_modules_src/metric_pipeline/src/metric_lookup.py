@@ -19,22 +19,39 @@ class MetricLookup:
         Initialize with path to metrics data
         
         Args:
-            data_path: Path to JSON file with metrics data
+            data_path: Path to JSON or Parquet file with metrics data
         """
         self.data_path = Path(data_path)
         self.df = None
         self._load_data()
-    
+        
     def _load_data(self):
-        """Load and prepare the metrics dataframe"""
+        """Load and prepare the metrics dataframe - auto-detects JSON or Parquet"""
         if not self.data_path.exists():
             raise FileNotFoundError(f"Data file not found: {self.data_path}")
         
-        self.df = pd.read_json(self.data_path)
-        print(f"✓ KPI-JSON: Loaded {len(self.df)} metric records")
-        print(f"✓ KPI-JSON: Unique tickers: {self.df['ticker'].nunique()}")
-        print(f"✓ KPI-JSON: Year range: {self.df['year'].min()}-{self.df['year'].max()}")
-    
+        # Auto-detect format FIRST
+        suffix = self.data_path.suffix.lower()
+        
+        # THEN load based on format
+        if suffix == '.json':
+            self.df = pd.read_json(self.data_path)
+        elif suffix == '.parquet':
+            self.df = pd.read_parquet(self.data_path)
+        else:
+            raise ValueError(f"Unsupported file format: {suffix}")
+        
+        if self.df['year'].dtype != 'int64':
+            self.df['year'] = self.df['year'].astype(int)
+        
+        print(
+            f"✓ Loaded {len(self.df):,} records from {self.data_path.name} "
+            f"({self.df['ticker'].nunique()} tickers, "
+            f"{self.df['year'].min()}-{self.df['year'].max()})"  # Remove :.0f since it's int now
+        )
+        
+
+
     def query(self, ticker: str, year: int, metric: str) -> Optional[Dict[str, any]]:
         """
         Query for a specific metric value
@@ -51,7 +68,7 @@ class MetricLookup:
         result = self.df[
             (self.df['ticker'] == ticker) &
             (self.df['year'] == year) &
-            (self.df['metric'] == metric)
+            (self.df['metric_label'] == metric)
         ]
         
         if result.empty:
@@ -64,7 +81,7 @@ class MetricLookup:
             return {
                 'ticker': ticker,
                 'year': year,
-                'metric': metric,
+                'metric_label': metric,
                 'value': None,
                 'found': False,
                 'reason': 'Value is NaN/missing in dataset'
@@ -73,7 +90,7 @@ class MetricLookup:
         return {
             'ticker': ticker,
             'year': year,
-            'metric': metric,
+            'metric_label': metric,
             'value': value,
             'found': True
         }
@@ -82,7 +99,7 @@ class MetricLookup:
         """Get all years where data is available for a ticker/metric combo"""
         results = self.df[
             (self.df['ticker'] == ticker) &
-            (self.df['metric'] == metric) &
+            (self.df['metric_label'] == metric) &
             (self.df['value'].notna())
         ]
         return sorted(results['year'].unique().tolist())
@@ -94,7 +111,7 @@ class MetricLookup:
             (self.df['year'] == year) &
             (self.df['value'].notna())
         ]
-        return sorted(results['metric'].unique().tolist())
+        return sorted(results['metric_label'].unique().tolist())
     
     def query_multiple(self, ticker: str, year: int, metrics: List[str]) -> List[Dict[str, any]]:
         """
@@ -180,7 +197,7 @@ class MetricLookup:
         mask = (
             self.df['ticker'].isin(tickers) &
             self.df['year'].isin(years) &
-            self.df['metric'].isin(metrics)
+            self.df['metric_label'].isin(metrics)
         )
         
         filtered_df = self.df[mask].copy()
@@ -194,7 +211,7 @@ class MetricLookup:
                 result = {
                     'ticker': row['ticker'],
                     'year': int(row['year']),
-                    'metric': row['metric'],
+                    'metric_label': row['metric_label'],
                     'value': None,
                     'found': False,
                     'reason': 'Value is NaN/missing in dataset'
@@ -203,7 +220,7 @@ class MetricLookup:
                 result = {
                     'ticker': row['ticker'],
                     'year': int(row['year']),
-                    'metric': row['metric'],
+                    'metric_label': row['metric_label'],
                     'value': float(value),
                     'found': True
                 }
