@@ -1,1 +1,57 @@
 
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  edgar-sdk-ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f MetricsPipeline/requirements.txt ]; then pip install -r MetricsPipeline/requirements.txt; fi
+        pip install flake8
+        
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 MetricsPipeline --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 MetricsPipeline --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Basic Import Test
+      run: |
+        cd MetricsPipeline
+        python -c "import pandas; import nltk; print('Imports successful')"
+
+    - name: Run Tests
+      run: |
+        cd MetricsPipeline
+        pytest tests
+
+    - name: Build Docker Image (Dry Run)
+      run: |
+        cd MetricsPipeline
+        docker build -t metrics-pipeline:test .
+
+    - name: Push Docker Image to ECR (Dry Run)
+      run: |
+        cd MetricsPipeline
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your-ecr-repo-url>
+        docker push metrics-pipeline:test
+
+    - name: Deploy to ECS (Dry Run)
+      run: |
+        cd MetricsPipeline
+        aws ecs update-service --cluster <your-cluster-name> --service <your-service-name> --force-new-deployment
+        aws ecs describe-services --cluster <your-cluster-name> --services <your-service-name>  
