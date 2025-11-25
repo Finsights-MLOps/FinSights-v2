@@ -9,7 +9,11 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Optional, Dict, List
+import logging
 
+from finrag_ml_tg1.loaders.data_loader_strategy import DataLoaderStrategy
+
+logger = logging.getLogger(__name__)
 
 class MetricLookup:
     """Handle querying the metrics dataframe"""
@@ -25,6 +29,47 @@ class MetricLookup:
         self.df = None
         self._load_data()
         
+
+
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame) -> 'MetricLookup':
+        """
+        Create MetricLookup from an already-loaded DataFrame.
+        Return type: -> 'MetricLookup' (quoted string for forward reference)
+        annotation: instance: MetricLookup = cls.__new__(cls)
+
+        Used when DataLoader has already loaded the KPI fact data
+        (e.g., from S3 in Lambda or local cache).
+        
+        Args:
+            df: Pandas DataFrame with KPI fact data
+                Expected columns: ticker, year, metric_label, value
+        
+        Returns:
+            Initialized MetricLookup instance
+        """
+        # Create instance without calling __init__
+        instance = cls.__new__(cls)
+        
+        # No file path (loaded from DataFrame)
+        instance.data_path = None
+        
+        # Validate year column type
+        if df['year'].dtype != 'int64':
+            df = df.copy()
+            df['year'] = df['year'].astype(int)
+        
+        # Store DataFrame
+        instance.df = df
+        
+        logger.info(
+            f"✓ MetricLookup initialized from DataFrame: {len(df):,} records "
+            f"({df['ticker'].nunique()} tickers, "
+            f"{df['year'].min()}-{df['year'].max()})"
+        )
+        
+        return instance
+
     def _load_data(self):
         """Load and prepare the metrics dataframe - auto-detects JSON or Parquet"""
         if not self.data_path.exists():
@@ -50,6 +95,8 @@ class MetricLookup:
             f"{self.df['year'].min()}-{self.df['year'].max()})"  # Remove :.0f since it's int now
         )
         
+
+    ## ---------------------------------------------------------------------------------------------------
 
 
     def query(self, ticker: str, year: int, metric: str) -> Optional[Dict[str, any]]:

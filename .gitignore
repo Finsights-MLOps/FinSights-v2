@@ -205,3 +205,5 @@ ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env.txt
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials_tpad_mjs.env
 ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env
 
+/personal_notes_mjs
+personal_notes_mjs/

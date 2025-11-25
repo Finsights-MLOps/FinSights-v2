@@ -1,0 +1,142 @@
+# ============================================================================
+# SAM IGNORE - Surgical Exclusion Strategy
+# Keep: dimensions/, qa_manual_exports/ (small useful JSONs)
+# Keep: All folder structure (including provider subdirectories)
+# Ignore: Heavy data files in specific directories
+# ============================================================================
+
+# ============================================================================
+# HEAVY DATA FILES - Ignore by location + extension
+# ============================================================================
+
+# Stage 1: Raw fact sentences (large parquet)
+data_cache/stage1_facts/*.parquet
+
+# Stage 2: Meta embeddings (large parquet)
+data_cache/meta_embeds/*.parquet
+
+# Stage 3: S3 Vectors staging (large parquet)
+# Keep structure: stage3_s3vectors/cohere_1024d/ (folder preserved)
+# Ignore only: the .parquet files inside
+data_cache/stage3_s3vectors/*/*.parquet
+data_cache/stage3_s3vectors/*/*.arrow
+data_cache/stage3_s3vectors/*/*.feather
+
+# Embeddings: Vector tables (huge parquets)
+# Keep structure: embeddings/cohere_1024d/ (folder preserved)
+# Ignore only: the .parquet files inside
+data_cache/embeddings/*/*.parquet
+data_cache/embeddings/*/*.arrow
+data_cache/embeddings/*/*.feather
+
+# Analysis exports: Large bundle JSONs (55MB-100MB)
+# Keep folder structure, ignore only the heavy files
+data_cache/analysis_exports/**/*.json
+
+# Trial data incremental
+data_cache/trial_data_incr/*.json
+
+# ============================================================================
+# KEEP THESE DIRECTORIES FULLY (small useful files)
+# ============================================================================
+# dimensions/ - Small dimension tables (JSON + small parquets)
+# qa_manual_exports/ - Gold test sets and manual annotations
+# These are explicitly NOT ignored
+
+# ============================================================================
+# PYTHON ARTIFACTS
+# ============================================================================
+__pycache__/
+**/__pycache__/**
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ============================================================================
+# VIRTUAL ENVIRONMENTS
+# ============================================================================
+venv_ml_rag/
+venv_*/
+.venv/
+env/
+ENV/
+.env
+
+# ============================================================================
+# JUPYTER ARTIFACTS
+# ============================================================================
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/**
+*.ipynb
+
+# ============================================================================
+# DEVELOPMENT DIRECTORIES (not needed in Lambda)
+# ============================================================================
+tests/
+platform_core_notebooks/
+demo_images_export/
+
+# ============================================================================
+# GIT FILES
+# ============================================================================
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+*.md
+!README.md
+!lambda_design_notes.md
+
+# ============================================================================
+# IDE FILES
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# ============================================================================
+# OS FILES
+# ============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================================
+# DVC FILES
+# ============================================================================
+.dvc/
+*.dvc
+
+# ============================================================================
+# OTHER MODELPIPELINE SUBDIRECTORIES (not needed in Lambda)
+# ============================================================================
+DataPipeline/
+serving/
+finrag_ml_tg2/
+MLFlow_POC/
+Edgar-Sentences-SDK/
+
+# ============================================================================
+# RESULT: FOLDER STRUCTURE PRESERVED
+# ============================================================================
+# ✓ data_cache/embeddings/cohere_1024d/          (empty folder exists)
+# ✓ data_cache/stage3_s3vectors/cohere_1024d/    (empty folder exists)
+# ✗ Files inside these folders ignored (.parquet files)
+#
+# This allows your code to reference these paths:
+#   config.get_s3vectors_cache_path('cohere_1024d')  
+#   → returns: data_cache/stage3_s3vectors/cohere_1024d/file.parquet
+#   → path exists, file just isn't there (will be downloaded from S3)
+# ============================================================================

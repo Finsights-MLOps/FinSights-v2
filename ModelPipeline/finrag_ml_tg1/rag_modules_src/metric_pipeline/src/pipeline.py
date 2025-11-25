@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 import re
+import logging
+logger = logging.getLogger(__name__)
 
 from .filter_extractor import FilterExtractor
 from .metric_lookup import MetricLookup
@@ -23,22 +25,51 @@ from finrag_ml_tg1.rag_modules_src.constants.metric_mapping_v2 import (
     QUANTITATIVE_INDICATORS,
 )
 from finrag_ml_tg1.rag_modules_src.entity_adapter.string_utils import simple_fuzzy_match
+from finrag_ml_tg1.loaders.data_loader_strategy import DataLoaderStrategy
+
 
 
 class MetricPipeline:
     """Orchestrate the full metric extraction and lookup pipeline"""
     
-    def __init__(self, data_path: str, company_dim_path: Optional[str] = None):
+    def __init__(self, data_loader: DataLoaderStrategy):
         """
-        Initialize pipeline
+        Initialize metric pipeline with DataLoader injection.
         
         Args:
-            data_path: Path to metrics JSON data
-            company_dim_path: Path to company dimension parquet (optional)
+            data_loader: DataLoader instance (LocalCacheLoader or S3StreamingLoader)
+        
+        Note:
+            Loads KPI fact data via data_loader.load_kpi_fact_data()
+            Works in both local dev (filesystem) and Lambda (S3 streaming).
         """
-        self.extractor = FilterExtractor(company_dim_path=company_dim_path)
-        self.lookup = MetricLookup(data_path)
-    
+        logger.info("MetricPipeline initializing with DataLoader...")
+        
+        # ════════════════════════════════════════════════════════════════════
+        # Initialize FilterExtractor with DataLoader
+        # ════════════════════════════════════════════════════════════════════
+        self.extractor = FilterExtractor(data_loader=data_loader)
+        
+        # ════════════════════════════════════════════════════════════════════
+        # Load KPI Fact Data via DataLoader
+        # ════════════════════════════════════════════════════════════════════
+        logger.info("Loading KPI fact data via DataLoader...")
+        kpi_df_pl = data_loader.load_kpi_fact_data()
+        
+        # Convert Polars → Pandas (MetricLookup uses pandas)
+        import pandas as pd
+        kpi_df_pd = kpi_df_pl.to_pandas()
+        
+        logger.info(f"  ✓ Loaded {len(kpi_df_pd):,} KPI records")
+        
+        # ════════════════════════════════════════════════════════════════════
+        # Initialize MetricLookup with DataFrame
+        # ════════════════════════════════════════════════════════════════════
+        self.lookup = MetricLookup.from_dataframe(kpi_df_pd)
+        
+        logger.info("MetricPipeline initialized successfully")
+
+
     def needs_metric_layer(self, query: str) -> bool:
         """
         Determine if query requires metric lookup with FULL FUZZY MATCHING
@@ -250,3 +281,13 @@ class MetricPipeline:
             msg += "\n"
         
         return msg
+    
+
+"""
+## Legacy INIT for reference. 
+
+# LEGACY --- reference.
+# def __init__(self, data_path: str, company_dim_path: Optional[str] = None):
+#     self.extractor = FilterExtractor(company_dim_path=company_dim_path)
+#     self.lookup = MetricLookup(data_path)    
+"""

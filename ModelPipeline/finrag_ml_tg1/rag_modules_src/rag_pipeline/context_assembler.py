@@ -68,6 +68,8 @@ from pathlib import Path
 import polars as pl
 from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
 from finrag_ml_tg1.rag_modules_src.rag_pipeline.models import SentenceRecord
+from finrag_ml_tg1.loaders.data_loader_strategy import DataLoaderStrategy
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,52 +100,41 @@ class ContextAssembler:
         assembler = ContextAssembler(config)
         context_str = assembler.assemble(unique_sentences)
         # Pass context_str to BedrockClient for LLM synthesis
+
+    Dont do this way:
+    X All class-level path resolution code (_current, _model_root, loop)
+    X DIM_COMPANIES_PATH class constant
+    X DIM_SECTIONS_PATH class constant
     """
     
-    # Find ModelPipeline root - proper pattern. If you use resolve, pls quit. 
-    _current = Path.cwd()
-    _model_root = None
-    for _parent in [_current] + list(_current.parents):
-        if _parent.name == "ModelPipeline":
-            _model_root = _parent
-            break
-    
-    if _model_root is None:
-        raise RuntimeError("Cannot find 'ModelPipeline' root in path tree")
-    
-    # Dimension table paths
-    DIM_COMPANIES_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
-    DIM_SECTIONS_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_sec_sections.parquet"
-
-    
-    def __init__(self, config: MLConfig):
+    def __init__(self, data_loader: DataLoaderStrategy, config: MLConfig):
         """
-        Initialize context assembler.
+        Initialize context assembler with DataLoader injection.
         
         Args:
+            data_loader: DataLoader instance (LocalCacheLoader or S3StreamingLoader)
             config: MLConfig instance (currently unused, but available for future config)
         
-        Note: Loads dimension tables for ticker and section name lookups.
+        Note: Loads dimension tables via data_loader for ticker and section name lookups.
         """
+        self.data_loader = data_loader
+        self.config = config
+        
         logger.info("ContextAssembler initializing...")
         
-        # Load dimension tables
-        if not self.DIM_COMPANIES_PATH.exists():
-            raise FileNotFoundError(f"Companies dimension table not found: {self.DIM_COMPANIES_PATH}")
-        
-        if not self.DIM_SECTIONS_PATH.exists():
-            raise FileNotFoundError(f"Sections dimension table not found: {self.DIM_SECTIONS_PATH}")
-        
-        self.dim_companies = pl.read_parquet(self.DIM_COMPANIES_PATH)
-        self.dim_sections = pl.read_parquet(self.DIM_SECTIONS_PATH)
+        # Load dimension tables via DataLoader
+        self.dim_companies = self.data_loader.load_dimension_companies()
+        self.dim_sections = self.data_loader.load_dimension_sections()
         
         logger.info(
             f"  ✓ Loaded {len(self.dim_companies)} companies\n"
             f"  ✓ Loaded {len(self.dim_sections)} sections"
         )
         logger.info("ContextAssembler initialized")
-    
-    
+
+
+
+
     def assemble(self, sentences: List[SentenceRecord]) -> str:
         """
         Format sentences into LLM-ready context string.
@@ -369,3 +360,45 @@ class ContextAssembler:
         )
         
         return header
+    
+
+"""
+## legacy version;
+
+    # Find ModelPipeline root - proper pattern. If you use resolve, pls quit. 
+    _current = Path.cwd()
+    _model_root = None
+    for _parent in [_current] + list(_current.parents):
+        if _parent.name == "ModelPipeline":
+            _model_root = _parent
+            break
+    
+    if _model_root is None:
+        raise RuntimeError("Cannot find 'ModelPipeline' root in path tree")
+    
+    # Dimension table paths
+    DIM_COMPANIES_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_companies_21.parquet"
+    DIM_SECTIONS_PATH = _model_root / "finrag_ml_tg1" / "data_cache" / "dimensions" / "finrag_dim_sec_sections.parquet"
+
+    
+    def __init__(self, config: MLConfig):
+        logger.info("ContextAssembler initializing...")
+        
+        # Load dimension tables
+        if not self.DIM_COMPANIES_PATH.exists():
+            raise FileNotFoundError(f"Companies dimension table not found: {self.DIM_COMPANIES_PATH}")
+        
+        if not self.DIM_SECTIONS_PATH.exists():
+            raise FileNotFoundError(f"Sections dimension table not found: {self.DIM_SECTIONS_PATH}")
+        
+        self.dim_companies = pl.read_parquet(self.DIM_COMPANIES_PATH)
+        self.dim_sections = pl.read_parquet(self.DIM_SECTIONS_PATH)
+        
+        logger.info(
+            f"  ✓ Loaded {len(self.dim_companies)} companies\n"
+            f"  ✓ Loaded {len(self.dim_sections)} sections"
+        )
+        logger.info("ContextAssembler initialized")
+    
+
+"""

@@ -32,6 +32,9 @@ from .section_universe import SectionUniverse
 from .section_extractor import SectionExtractor
 from .models import CompanyMatches, YearMatches, MetricMatches
 
+from finrag_ml_tg1.loaders.data_loader_strategy import DataLoaderStrategy
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,8 +112,7 @@ class EntityAdapter:
 
     def __init__(
         self,
-        company_dim_path: str | Path,
-        section_dim_path: str | Path,
+        data_loader: DataLoaderStrategy,
         *,
         # Allow dependency injection for advanced/testing use
         company_universe: CompanyUniverse | None = None,
@@ -121,11 +123,10 @@ class EntityAdapter:
         section_extractor: SectionExtractor | None = None,
     ) -> None:
         """
-        Initialize EntityAdapter with explicit dimension file paths.
+        Initialize EntityAdapter with DataLoader injection.
         
         Args:
-            company_dim_path: Full path to company dimension parquet file
-            section_dim_path: Full path to section dimension parquet file
+            data_loader: DataLoader instance (LocalCacheLoader or S3StreamingLoader)
             company_universe: Optional pre-built CompanyUniverse (for testing)
             section_universe: Optional pre-built SectionUniverse (for testing)
             company_extractor: Optional pre-built CompanyExtractor (for testing)
@@ -133,39 +134,56 @@ class EntityAdapter:
             metric_adapter: Optional pre-built MetricAdapter (for testing)
             section_extractor: Optional pre-built SectionExtractor (for testing)
         
-        Raises:
-            FileNotFoundError: If dimension files don't exist
+        Note:
+            Dimension tables are loaded via DataLoader.
+            Works in both local dev (filesystem) and Lambda (S3 streaming).
         """
-        # Convert to Path and validate existence
-        company_dim_path = Path(company_dim_path)
-        section_dim_path = Path(section_dim_path)
+        self.data_loader = data_loader
         
-        if not company_dim_path.exists():
-            raise FileNotFoundError(f"Company dimension file not found: {company_dim_path}")
-        if not section_dim_path.exists():
-            raise FileNotFoundError(f"Section dimension file not found: {section_dim_path}")
+        logger.info("EntityAdapter initializing with DataLoader...")
         
-        logger.info(f"EntityAdapter using company_dim: {company_dim_path}")
-        logger.info(f"EntityAdapter using section_dim: {section_dim_path}")
+        # ════════════════════════════════════════════════════════════════════
+        # Load dimension tables via DataLoader
+        # ════════════════════════════════════════════════════════════════════
+        dim_companies_pl = self.data_loader.load_dimension_companies()
+        dim_sections_pl = self.data_loader.load_dimension_sections()
+        
+        logger.info(
+            f"  ✓ Loaded {len(dim_companies_pl)} companies\n"
+            f"  ✓ Loaded {len(dim_sections_pl)} sections"
+        )
+        
+        # Convert Polars → Pandas (CompanyUniverse/SectionUniverse use pandas)
+        dim_companies_pd = dim_companies_pl.to_pandas()
+        dim_sections_pd = dim_sections_pl.to_pandas()
 
-        # Company universe / extractor
+        # ════════════════════════════════════════════════════════════════════
+        # Initialize Company Universe & Extractor
+        # ════════════════════════════════════════════════════════════════════
         if company_universe is None:
-            company_universe = CompanyUniverse(dim_path=company_dim_path)
+            company_universe = CompanyUniverse.from_dataframe(dim_companies_pd)
         if company_extractor is None:
             company_extractor = CompanyExtractor(company_universe)
 
-        # Section universe / extractor
+        # ════════════════════════════════════════════════════════════════════
+        # Initialize Section Universe & Extractor
+        # ════════════════════════════════════════════════════════════════════
         if section_universe is None:
-            section_universe = SectionUniverse(dim_path=section_dim_path)
+            section_universe = SectionUniverse.from_dataframe(dim_sections_pd)
         if section_extractor is None:
             section_extractor = SectionExtractor(section_universe)
 
-        # Year + metric adapters
+        # ════════════════════════════════════════════════════════════════════
+        # Initialize Year & Metric Adapters (no data loading needed)
+        # ════════════════════════════════════════════════════════════════════
         if year_extractor is None:
             year_extractor = YearExtractor()
         if metric_adapter is None:
-            metric_adapter = MetricAdapter(company_dim_path=company_dim_path)
+            metric_adapter = MetricAdapter(data_loader=data_loader)
 
+        # ════════════════════════════════════════════════════════════════════
+        # Store all initialized components
+        # ════════════════════════════════════════════════════════════════════
         self.company_universe = company_universe
         self.section_universe = section_universe
 
@@ -292,4 +310,85 @@ queries = [
 for q in queries:
     res = adapter.extract(q)
     EntityAdapter.debug_print(res)
+"""
+
+
+"""
+## =======================================================================
+LEGACY VERSION W NO DATALODER
+## =======================================================================
+
+
+
+    def __init__(
+        self,
+        company_dim_path: str | Path,
+        section_dim_path: str | Path,
+        *,
+        # Allow dependency injection for advanced/testing use
+        company_universe: CompanyUniverse | None = None,
+        section_universe: SectionUniverse | None = None,
+        company_extractor: CompanyExtractor | None = None,
+        year_extractor: YearExtractor | None = None,
+        metric_adapter: MetricAdapter | None = None,
+        section_extractor: SectionExtractor | None = None,
+    ) -> None:
+
+        Initialize EntityAdapter with explicit dimension file paths.
+        
+        Args:
+            company_dim_path: Full path to company dimension parquet file
+            section_dim_path: Full path to section dimension parquet file
+            company_universe: Optional pre-built CompanyUniverse (for testing)
+            section_universe: Optional pre-built SectionUniverse (for testing)
+            company_extractor: Optional pre-built CompanyExtractor (for testing)
+            year_extractor: Optional pre-built YearExtractor (for testing)
+            metric_adapter: Optional pre-built MetricAdapter (for testing)
+            section_extractor: Optional pre-built SectionExtractor (for testing)
+        
+        Raises:
+            FileNotFoundError: If dimension files don't exist
+
+        # Convert to Path and validate existence
+        company_dim_path = Path(company_dim_path)
+        section_dim_path = Path(section_dim_path)
+        
+        if not company_dim_path.exists():
+            raise FileNotFoundError(f"Company dimension file not found: {company_dim_path}")
+        if not section_dim_path.exists():
+            raise FileNotFoundError(f"Section dimension file not found: {section_dim_path}")
+        
+        logger.info(f"EntityAdapter using company_dim: {company_dim_path}")
+        logger.info(f"EntityAdapter using section_dim: {section_dim_path}")
+
+        # Company universe / extractor
+        if company_universe is None:
+            company_universe = CompanyUniverse(dim_path=company_dim_path)
+        if company_extractor is None:
+            company_extractor = CompanyExtractor(company_universe)
+
+        # Section universe / extractor
+        if section_universe is None:
+            section_universe = SectionUniverse(dim_path=section_dim_path)
+        if section_extractor is None:
+            section_extractor = SectionExtractor(section_universe)
+
+        # Year + metric adapters
+        if year_extractor is None:
+            year_extractor = YearExtractor()
+        if metric_adapter is None:
+            metric_adapter = MetricAdapter(company_dim_path=company_dim_path)
+
+        self.company_universe = company_universe
+        self.section_universe = section_universe
+
+        self.company_extractor = company_extractor
+        self.year_extractor = year_extractor
+        self.metric_adapter = metric_adapter
+        self.section_extractor = section_extractor
+
+        logger.info("EntityAdapter initialized successfully")
+
+## =======================================================================
+## =======================================================================
 """

@@ -82,6 +82,71 @@ class CompanyUniverse:
         )
         logger.debug(f"Alias tokens: {sorted(self._by_alias.keys())}")
 
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        *,
+        company_id_col: str = "company_id",
+        cik_int_col: str = "cik_int",
+        cik_str_col: str = "cik",
+        ticker_col: str = "ticker",
+        name_col: str = "company_name",
+    ) -> CompanyUniverse:
+        """
+        Create CompanyUniverse from an already-loaded DataFrame.
+        
+        Used when DataLoader has already loaded the dimension table
+        (e.g., from S3 in Lambda or local cache).
+        
+        Args:
+            df: Pandas DataFrame with company dimension data
+            company_id_col: Column name for company_id
+            cik_int_col: Column name for integer CIK
+            cik_str_col: Column name for string CIK
+            ticker_col: Column name for ticker
+            name_col: Column name for company name
+        
+        Returns:
+            Initialized CompanyUniverse instance
+        """
+        # Create instance without calling __init__ (bypass path validation)
+        instance = cls.__new__(cls)
+        
+        # Set column mappings
+        instance.company_id_col = company_id_col
+        instance.cik_int_col = cik_int_col
+        instance.cik_str_col = cik_str_col
+        instance.ticker_col = ticker_col
+        instance.name_col = name_col
+        
+        # No file path (loaded from DataFrame)
+        instance.dim_path = None
+        
+        # Validate columns exist
+        logger.info(f"Building CompanyUniverse from DataFrame: {len(df)} rows")
+        instance._validate_columns(df)
+        
+        # Initialize index structures
+        instance._records = {}
+        instance._by_ticker = {}
+        instance._by_name_norm = {}
+        instance._by_alias = {}
+        
+        # Build indexes from DataFrame
+        instance._build_indexes(df)
+        
+        logger.info(
+            "CompanyUniverse initialized from DataFrame: "
+            f"{len(instance._records)} companies, "
+            f"{len(instance._by_ticker)} tickers, "
+            f"{len(instance._by_alias)} alias tokens"
+        )
+        
+        return instance
+
+
     # ------------------------------------------------------------------ #
     # Public accessors
     # ------------------------------------------------------------------ #

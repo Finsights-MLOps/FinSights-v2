@@ -44,6 +44,77 @@ class SectionUniverse:
         self._by_canonical: Dict[str, SectionInfo] = {}
         self._load()
 
+
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame) -> SectionUniverse:
+        """
+        Create SectionUniverse from an already-loaded DataFrame.
+        
+        Used when DataLoader has already loaded the dimension table
+        (e.g., from S3 in Lambda or local cache).
+        
+        Args:
+            df: Pandas DataFrame with section dimension data
+        
+        Returns:
+            Initialized SectionUniverse instance
+        """
+        # Create instance without calling __init__
+        instance = cls.__new__(cls)
+        
+        # No file path (loaded from DataFrame)
+        instance.dim_path = None
+        
+        # Initialize index structure
+        instance._by_canonical = {}
+        
+        # Validate required columns
+        required_cols = {
+            "sec_item_canonical",
+            "section_code",
+            "section_name",
+            "section_description",
+            "section_category",
+            "part_number",
+            "priority",
+            "has_sub_items",
+        }
+        missing = required_cols.difference(df.columns)
+        if missing:
+            raise ValueError(
+                f"Section dimension DataFrame missing required columns: {sorted(missing)}"
+            )
+        
+        # Build indexes from DataFrame
+        logger.info(f"Building SectionUniverse from DataFrame: {len(df)} rows")
+        
+        by_canonical: Dict[str, SectionInfo] = {}
+        for _, row in df.iterrows():
+            canonical = str(row["sec_item_canonical"]).strip()
+            if not canonical:
+                continue
+
+            info = SectionInfo(
+                sec_item_canonical=canonical,
+                section_code=str(row["section_code"]),
+                section_name=str(row["section_name"]),
+                section_description=str(row["section_description"]),
+                section_category=str(row["section_category"]),
+                part_number=int(row["part_number"]),
+                priority=str(row["priority"]),
+                has_sub_items=bool(row["has_sub_items"]),
+            )
+            by_canonical[canonical] = info
+
+        instance._by_canonical = by_canonical
+        
+        logger.info(
+            f"SectionUniverse initialized from DataFrame: {len(instance._by_canonical)} sections"
+        )
+        
+        return instance
+
+
     # ------------------------------------------------------------------
     # Internal loading
     # ------------------------------------------------------------------

@@ -1,0 +1,10 @@
+{
+  "test_type": "data_loader",
+  "operations": [
+    "load_stage2_meta",
+    "load_dimension_companies",
+    "load_dimension_sections",
+    "fetch_sentences_by_ids"
+  ],
+  "description": "Test S3StreamingLoader in Lambda environment with REAL S3 access"
+}

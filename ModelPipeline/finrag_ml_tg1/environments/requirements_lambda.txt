@@ -1,0 +1,46 @@
+# requirements_lambda.txt
+# Minimal dependencies to run RAG pipeline in Lambda
+
+# ============================================================================
+# CORE DATA PROCESSING (MANDATORY)
+# ============================================================================
+polars>=1.0.0                    # All data operations
+numpy>=1.24.0,<2.0              # Polars dependency
+pyarrow>=14.0.0                 # Parquet I/O
+
+# ============================================================================
+# AWS SERVICES (MANDATORY)
+# ============================================================================
+boto3>=1.35.0                   # S3, Bedrock access
+botocore>=1.35.0                # Boto3 dependency
+
+# ============================================================================
+# CONFIGURATION (MANDATORY)
+# ============================================================================
+pyyaml>=6.0.0                   # ml_config.yaml parsing
+
+# ============================================================================
+# TEXT PROCESSING (IF USED)
+# ============================================================================
+nltk>=3.8.0                   
+regex>=2023.12.0               
+
+# ============================================================================
+# VECTOR SEARCH
+# ============================================================================
+# scikit-learn>=1.3.0           
+
+# ============================================================================
+# NOT NEEDED FOR LAMBDA
+# ============================================================================
+# cohere - ❌ Not used
+# openai - ❌ Not used
+# torch - ❌ Evaluation only
+# bert-score - ❌ Evaluation only
+# rouge-score - ❌ Evaluation only
+# fastapi - ❌ Not needed in Lambda
+# streamlit - ❌ Frontend only
+# jupyter - ❌ Development only
+# matplotlib - ❌ Visualization only
+
+

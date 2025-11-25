@@ -86,6 +86,39 @@ data_ml:
       metadata_file: embedding_metadata.json
       dimensions: 1024
 
+
+  ## DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_21.parquet
+  ## DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_sec_sections.parquet
+  # Dimension tables
+  dimensions:
+    path: DATA_MERGE_ASSETS/DIMENSION_TABLES
+    companies:
+      filename: finrag_dim_companies_21.parquet
+      description: "21 curated companies with CIK, ticker, name"
+    sections:
+      filename: finrag_dim_sec_sections.parquet
+      description: "SEC 10-K section taxonomy (20 sections)"
+
+  # KPI Fact Table (Metric Pipeline)
+  kpi_facts:
+    path: DATA_MERGE_ASSETS/FINRAG_FACT_METRICS
+    filename: KPI_FACT_DATA_EDGAR.parquet
+    description: "Structured KPI extraction from 10-K filings"
+
+  # Query Logs & Exports (QueryLogger persistence)
+  query_logging:
+    base_path: DATA_MERGE_ASSETS/LOGS/FINRAG
+    logs:
+      path: DATA_MERGE_ASSETS/LOGS/FINRAG/logs
+      description: "Query execution logs (metadata, cost, performance)"
+    contexts:
+      path: DATA_MERGE_ASSETS/LOGS/FINRAG/contexts
+      description: "Assembled contexts sent to LLM"
+    responses:
+      path: DATA_MERGE_ASSETS/LOGS/FINRAG/responses
+      description: "Full query responses with metadata"
+
+      
 # ============================================================================
 # EMBEDDING CONFIGURATION
 # ============================================================================

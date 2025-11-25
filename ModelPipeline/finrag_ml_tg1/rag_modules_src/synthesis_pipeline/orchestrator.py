@@ -145,7 +145,7 @@ def answer_query(
         logger.debug("MLConfig loaded")
         
         # RAG components (entity adapter, embedder, retriever, assembler)
-        rag_components = init_rag_components(model_root)
+        rag_components = init_rag_components()
         logger.debug("RAG components initialized")
         
         # Prompt loader (YAML-based system + query templates)
@@ -158,7 +158,7 @@ def answer_query(
         
         # Query logger (persistent logging)
         query_logger = QueryLogger()
-        logger.debug(f"QueryLogger initialized: {query_logger.log_file}")
+        logger.debug("QueryLogger initialized (Always-S3 mode)")
         
     except Exception as e:
         logger.error(f"Initialization failed: {e}", exc_info=True)
@@ -212,6 +212,7 @@ def answer_query(
             result['exports'] = exports
         except Exception as log_error:
             logger.error(f"Logging failed: {log_error}")
+            ## creating dict; log_file as key for new dict, not access. not attribute.
             result['exports'] = {'log_file': None, 'logging_error': str(log_error)}
         
         return result  # Return the dict
@@ -355,6 +356,7 @@ def answer_query(
             export_response=export_response
         )
         
+        ## -- exports is a dict returned by log_query(), which contains 'log_file'.
         # Add export paths to result
         result['exports'] = exports
         
@@ -367,7 +369,7 @@ def answer_query(
         # Logging failure should NOT crash query
         logger.error(f"Logging failed (non-fatal): {e}", exc_info=True)
         
-        # Add minimal exports info
+        # Add minimal exports info // (creating dict key)
         result['exports'] = {
             'log_file': None,
             'context_file': None,

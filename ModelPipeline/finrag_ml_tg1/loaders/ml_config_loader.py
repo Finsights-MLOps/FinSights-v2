@@ -21,27 +21,29 @@ class MLConfig:
     def __init__(self, config_path=None):
         """Load YAML configuration and credentials"""
         
-        # Load ML path config
-        if config_path is None:
-            config_path = Path(__file__).parent.parent / '.aws_config' / 'ml_config.yaml'
-
-        # Experimenting: system default encoding - fails on Windows ??        
-        # with open(config_path) as f:
-        #     self.cfg = yaml.safe_load(f)
+        # Step 1: Find and store ModelPipeline root (foundation for everything)
+        self.model_root = self._find_model_pipeline_root()
         
+        # Step 2: Load ML path config (now using model_root!)
+        if config_path is None:
+            config_path = self.model_root / 'finrag_ml_tg1' / '.aws_config' / 'ml_config.yaml'
+        
+        # Step 3: Load YAML
         with open(config_path, encoding='utf-8') as f:
             self.cfg = yaml.safe_load(f)
-
         
-        # Load credentials (AWS + ML APIs)
+        # Step 4: Load credentials (AWS + ML APIs)
         self._load_aws_credentials()
         self._load_ml_credentials()
+
+        
+
     
     # ========== Credential Loading ==========
     
     def _load_aws_credentials(self):
         """Load AWS credentials from .aws_secrets/aws_credentials.env"""
-        aws_creds_path = Path(__file__).parent.parent / '.aws_secrets' / 'aws_credentials.env'
+        aws_creds_path = self.model_root / 'finrag_ml_tg1' / '.aws_secrets' / 'aws_credentials.env'
         
         if aws_creds_path.exists():
             load_dotenv(aws_creds_path, override=True)
@@ -420,14 +422,14 @@ class MLConfig:
             provider: Model provider (e.g., 'cohere_1024d')
         
         Returns:
-            Path: ../data_cache/stage3_s3vectors/{provider}/{filename}.parquet
+            Path: ModelPipeline/finrag_ml_tg1/data_cache/stage3_s3vectors/{provider}/{filename}.parquet
         """
         s3_key = self.s3vectors_path(provider)
         filename = Path(s3_key).name
         
-        cache_path = Path.cwd().parent / 'data_cache' / 'stage3_s3vectors' / provider / filename
+        # Use model_root - works everywhere
+        cache_path = self.model_root / 'finrag_ml_tg1' / 'data_cache' / 'stage3_s3vectors' / provider / filename
         return cache_path
-
 
     # ========= Semantic Variants & Retrieval Config ==========
 
@@ -552,6 +554,182 @@ class MLConfig:
                 )
             
             return serving_config[default_key]
+
+
+
+    # ============================================================================
+    # DIMENSION TABLE PATHS
+    # ============================================================================
+
+    @property
+    def dimension_companies_path(self):
+        """
+        Get S3 key for companies dimension table
+        
+        Returns:
+            str: S3 key like 'DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_21.parquet'
+        """
+        dim_config = self.cfg['data_ml'].get('dimensions', {})
+        
+        # Fallback if not in YAML (use known path)
+        if not dim_config:
+            return "DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_companies_21.parquet"
+        
+        path = dim_config.get('path', 'DATA_MERGE_ASSETS/DIMENSION_TABLES')
+        filename = dim_config.get('companies', {}).get('filename', 'finrag_dim_companies_21.parquet')
+        
+        return f"{path}/{filename}"
+
+    @property
+    def dimension_sections_path(self):
+        """
+        Get S3 key for sections dimension table
+        
+        Returns:
+            str: S3 key like 'DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_sec_sections.parquet'
+        """
+        dim_config = self.cfg['data_ml'].get('dimensions', {})
+        
+        # Fallback if not in YAML
+        if not dim_config:
+            return "DATA_MERGE_ASSETS/DIMENSION_TABLES/finrag_dim_sec_sections.parquet"
+        
+        path = dim_config.get('path', 'DATA_MERGE_ASSETS/DIMENSION_TABLES')
+        filename = dim_config.get('sections', {}).get('filename', 'finrag_dim_sec_sections.parquet')
+        
+        return f"{path}/{filename}"
+
+
+    @property
+    def kpi_fact_data_path(self):
+        """
+        Get S3 key for KPI fact data table
+        
+        Returns:
+            str: S3 key like 'DATA_MERGE_ASSETS/FINRAG_FACT_METRICS/KPI_FACT_DATA_EDGAR.parquet'
+        """
+        kpi_config = self.cfg['data_ml'].get('kpi_facts', {})
+        
+        # Fallback if not in YAML (use known path)
+        if not kpi_config:
+            return "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS/KPI_FACT_DATA_EDGAR.parquet"
+        
+        path = kpi_config.get('path', 'DATA_MERGE_ASSETS/FINRAG_FACT_METRICS')
+        filename = kpi_config.get('filename', 'KPI_FACT_DATA_EDGAR.parquet')
+        
+        return f"{path}/{filename}"
+
+
+    # ============================================================================
+    # QUERY LOGGING PATHS (QueryLogger S3 exports)
+    # ============================================================================
+
+    @property
+    def query_logs_path(self):
+        """
+        Get S3 prefix for query logs
+        
+        Returns:
+            str: S3 prefix like 'DATA_MERGE_ASSETS/LOGS/FINRAG/logs'
+        """
+        logging_config = self.cfg['data_ml'].get('query_logging', {})
+        
+        # Fallback if not in YAML
+        if not logging_config:
+            return "DATA_MERGE_ASSETS/LOGS/FINRAG/logs"
+        
+        return logging_config.get('logs', {}).get('path', 'DATA_MERGE_ASSETS/LOGS/FINRAG/logs')
+
+    @property
+    def query_contexts_path(self):
+        """
+        Get S3 prefix for query contexts
+        
+        Returns:
+            str: S3 prefix like 'DATA_MERGE_ASSETS/LOGS/FINRAG/contexts'
+        """
+        logging_config = self.cfg['data_ml'].get('query_logging', {})
+        
+        if not logging_config:
+            return "DATA_MERGE_ASSETS/LOGS/FINRAG/contexts"
+        
+        return logging_config.get('contexts', {}).get('path', 'DATA_MERGE_ASSETS/LOGS/FINRAG/contexts')
+
+    @property
+    def query_responses_path(self):
+        """
+        Get S3 prefix for query responses
+        
+        Returns:
+            str: S3 prefix like 'DATA_MERGE_ASSETS/LOGS/FINRAG/responses'
+        """
+        logging_config = self.cfg['data_ml'].get('query_logging', {})
+        
+        if not logging_config:
+            return "DATA_MERGE_ASSETS/LOGS/FINRAG/responses"
+        
+        return logging_config.get('responses', {}).get('path', 'DATA_MERGE_ASSETS/LOGS/FINRAG/responses')
+
+
+    ## ========= New Methods for Lambda Environment Support ==========
+
+    def _find_model_pipeline_root(self) -> Path:
+        """
+        Find ModelPipeline root directory.
+        Supports both local development and Lambda environments.
+        
+        Search order:
+        1. Lambda environment (/var/task/ModelPipeline)
+        2. File's own path tree (where this .py file lives)
+        3. Current working directory tree
+        """
+        # Lambda detection
+        if os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
+            lambda_task_root = Path(os.getenv('LAMBDA_TASK_ROOT', '/var/task'))
+            model_pipeline = lambda_task_root / "ModelPipeline"
+            if model_pipeline.exists():
+                print(f"[DEBUG] ✓ Lambda environment detected: {model_pipeline}")
+                return model_pipeline
+            else:
+                print(f"[WARNING] Lambda env detected but ModelPipeline not found at {model_pipeline}")
+        
+        # Strategy 1: Check file's own location first
+        # If this file is at: ModelPipeline/finrag_ml_tg1/loaders/ml_config_loader.py
+        # Then walk up from file location
+        file_path = Path(__file__).resolve()
+        for parent in [file_path] + list(file_path.parents):
+            if parent.name == "ModelPipeline":
+                print(f"[DEBUG] ✓ Found ModelPipeline via file path: {parent}")
+                return parent
+        
+        # Strategy 2: Check current working directory (for notebook usage)
+        current = Path.cwd()
+        for parent in [current] + list(current.parents):
+            if parent.name == "ModelPipeline":
+                print(f"[DEBUG] ✓ Found ModelPipeline via cwd: {parent}")
+                return parent
+        
+        # Strategy 3: Failed - provide helpful error
+        raise RuntimeError(
+            f"Cannot find ModelPipeline root directory.\n"
+            f"  Searched in file path: {file_path}\n"
+            f"  Searched in cwd: {current}\n"
+            f"  Expected 'ModelPipeline' directory in path tree or Lambda /var/task/ModelPipeline"
+        )
+
+    # Add new properties (after __init__):
+    @property
+    def is_lambda_environment(self) -> bool:
+        """Detect if running in AWS Lambda"""
+        return bool(os.getenv('AWS_LAMBDA_FUNCTION_NAME'))
+
+    @property
+    def data_loading_mode(self) -> str:
+        """
+        Determine data loading strategy.
+        Returns: 'LOCAL_CACHE' or 'S3_STREAMING'
+        """
+        return 'S3_STREAMING' if self.is_lambda_environment else 'LOCAL_CACHE'
 
 # ============================================================================
 # TEST / DEMO
@@ -705,13 +883,63 @@ if __name__ == "__main__":
         print(f"  Filter Years: {config.filter_year}")
         print(f"  Filter Sections: {config.filter_sections}")
         
+        print(f"\n[Embedding Execution]")
+        print(f"  Mode: {config.embedding_mode}")
+        print(f"  Filter CIK: {config.filter_cik}")
+        print(f"  Filter Year: {config.filter_year}")
+        print(f"  Filter Sections: {config.filter_sections}")
+        
         # ====================================================================
-        # FINAL STATUS
+        # NEW: LAMBDA REFACTORING VALIDATION
         # ====================================================================
-        print("\n" + "=" * 80)
-        print("CONFIGURATION LOAD: SUCCESS")
+        print(f"\n" + "=" * 80)
+        print("LAMBDA REFACTORING - NEW FEATURES")
         print("=" * 80)
         
+        print(f"\n[Model Root Resolution]")
+        print(f"  Model Root: {config.model_root}")
+        print(f"  Root Type: {type(config.model_root).__name__}")
+        print(f"  Root Exists: {config.model_root.exists()}")
+        print(f"  Config Path: {config.model_root / 'finrag_ml_tg1' / '.aws_config' / 'ml_config.yaml'}")
+        
+        print(f"\n[Environment Detection]")
+        print(f"  Is Lambda: {config.is_lambda_environment}")
+        print(f"  Data Loading Mode: {config.data_loading_mode}")
+        print(f"  Expected Mode: {'S3_STREAMING' if config.is_lambda_environment else 'LOCAL_CACHE'}")
+        
+        print(f"\n[Path Resolution Tests]")
+        # Test all major path methods using model_root
+        print(f"  ✓ AWS Creds Path: {config.model_root / 'finrag_ml_tg1' / '.aws_secrets' / 'aws_credentials.env'}")
+        print(f"  ✓ YAML Config Path: {config.model_root / 'finrag_ml_tg1' / '.aws_config' / 'ml_config.yaml'}")
+        
+        # Test cache path methods
+        try:
+            s3vec_cache = config.get_s3vectors_cache_path('cohere_1024d')
+            print(f"  ✓ S3 Vectors Cache: {s3vec_cache}")
+            print(f"    Uses model_root: {str(config.model_root) in str(s3vec_cache)}")
+        except Exception as e:
+            print(f"  ✗ S3 Vectors Cache Error: {e}")
+        
+        print(f"\n[Data Loader Integration Ready]")
+        print(f"  Config has model_root: {hasattr(config, 'model_root')}")
+        print(f"  Config has is_lambda_environment: {hasattr(config, 'is_lambda_environment')}")
+        print(f"  Config has data_loading_mode: {hasattr(config, 'data_loading_mode')}")
+        print(f"  ✓ Ready for create_data_loader(config)")
+        
+        # ====================================================================
+        # FINAL VALIDATION
+        # ====================================================================
+        print(f"\n" + "=" * 80)
+        print("✓ CONFIGURATION LOADED SUCCESSFULLY - LAMBDA-READY!")
+        print("=" * 80)
+        
+        print(f"\n[Quick Stats]")
+        print(f"  Total config sections: {len(config.cfg)}")
+        print(f"  S3 bucket: {config.bucket}")
+        print(f"  Bedrock model: {config.bedrock_model_id}")
+        print(f"  Default serving model: {config.get_default_serving_model()['display_name']}")
+        print(f"  Environment: {'Lambda' if config.is_lambda_environment else 'Local Development'}")
+
     except Exception as e:
         print("\n" + "=" * 80)
         print("CONFIGURATION ERROR")

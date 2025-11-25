@@ -99,6 +99,13 @@ User Raw Query
 ```
 
 
+### Data Dependencies:
+- Stage 2 Meta Table: finrag_fact_sentences_meta_embeds.parquet (~73MB)
+- Stage 3 S3 Vectors Table: finrag_s3vectors_cohere_1024d.parquet (~360MB)
+- Dimension Tables: Companies, Sections (small)
+- Metric Data: downloaded_data.json (KPI lookup)
+
+
 ## Next Steps
 → See [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) for detailed technical implementation across 10 major development phases.
 

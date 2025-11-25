@@ -1,13 +1,22 @@
 """
+## Design three lean helpers: ## “conductor”
+
 run_supply_line_1_kpi(...) - KPI chain
 run_supply_line_2_rag(...) - retrieval chain
 
-Design three lean helpers:
     Supply Line 1 → KPI block.
     Supply Line 2 → RAG context block.
     A small “conductor” that calls both and concatenates the two strings.
 """
 
+"""
+EntityAdapter.__init__() will accept data_loader parameter
+MetricPipeline.__init__() will accept data_loader parameter
+SentenceExpander.__init__() will accept data_loader parameter
+ContextAssembler.__init__() will accept data_loader parameter
+
+
+"""
 # ModelPipeline/finrag_ml_tg1/synthesis_pipeline/supply_lines.py
 
 from pathlib import Path
@@ -52,46 +61,47 @@ class RAGComponents:
     assembler: ContextAssembler
 
 
-
-def init_rag_components(model_root: Path) -> RAGComponents:
+def init_rag_components() -> RAGComponents:
     """
     Convenience factory to build all core RAG components from the standard config.
-    centralises the initialization that you previously did in the isolation
-    notebooks (MLConfig, Bedrock client, dimensions, metric JSON, etc.).
+    Centralizes initialization with Lambda-compatible DataLoader injection.
+    
+    
+    Returns:
+        RAGComponents: Dataclass bundle of all initialized components
     """
-    # Global config & Bedrock client
-    config = MLConfig()
+    # ════════════════════════════════════════════════════════════════════
+    # Initialize Config & DataLoader (NEW - Lambda-compatible)
+    # ════════════════════════════════════════════════════════════════════
+    config = MLConfig() ## model_root: Path -- already handled inside MLConfig.
     bedrock_client = config.get_bedrock_client()
-
-    # Dimension paths
-    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
-    dim_sections = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_sec_sections.parquet"
-
-    # Metric JSON path -- JSON outdated, use parquet.
-    # metric_json = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/downloaded_data.json"
-    METRIC_DATA_FACT = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/KPI_FACT_DATA_EDGAR.parquet" 
-
-    # 1) Entity adapter
-    adapter = EntityAdapter(company_dim_path=dim_companies, section_dim_path=dim_sections)
-
-    # 2) Metric pipeline
-    metric_pipeline = MetricPipeline(
-        data_path=str(METRIC_DATA_FACT),
-        company_dim_path=str(dim_companies),
-    )
-
-    # 3) Query embedder
+    
+    # Create DataLoader once - auto-detects environment
+    from finrag_ml_tg1.loaders.data_loader_factory import create_data_loader
+    data_loader = create_data_loader(config)
+    
+    # ════════════════════════════════════════════════════════════════════
+    # Component Initialization (Injecting DataLoader)
+    # ════════════════════════════════════════════════════════════════════
+    
+    # 1) Entity adapter - NOW receives DataLoader
+    adapter = EntityAdapter(data_loader=data_loader)
+    
+    # 2) Metric pipeline - NOW receives DataLoader
+    metric_pipeline = MetricPipeline(data_loader=data_loader)
+    
+    # 3) Query embedder (unchanged - doesn't load data)
     embedding_cfg = config.cfg["embedding"]
     runtime_cfg = EmbeddingRuntimeConfig.from_ml_config(embedding_cfg)
     embedder = QueryEmbedderV2(runtime_cfg, boto_client=bedrock_client)
-
-    # 4) Filter builder
+    
+    # 4) Filter builder (unchanged - doesn't load data)
     filter_builder = MetadataFilterBuilder(config)
-
-    # 5) Variant pipeline
+    
+    # 5) Variant pipeline (unchanged - doesn't load data)
     variant_pipeline = VariantPipeline(config, adapter, embedder, bedrock_client)
-
-    # 6) S3 retriever
+    
+    # 6) S3 retriever (unchanged - uses S3 Vectors API, not Parquet)
     retrieval_cfg = config.get_retrieval_config()
     retriever = S3VectorsRetriever(
         retrieval_config=retrieval_cfg,
@@ -100,13 +110,13 @@ def init_rag_components(model_root: Path) -> RAGComponents:
         region=config.region,
         variant_pipeline=variant_pipeline,
     )
-
-    # 7) Sentence expander
-    expander = SentenceExpander(config)
-
-    # 8) Context assembler
-    assembler = ContextAssembler(config)
-
+    
+    # 7) Sentence expander - NOW receives DataLoader
+    expander = SentenceExpander(data_loader=data_loader, config=config)
+    
+    # 8) Context assembler - NOW receives DataLoader
+    assembler = ContextAssembler(data_loader=data_loader, config=config)
+    
     return RAGComponents(
         adapter=adapter,
         metric_pipeline=metric_pipeline,
@@ -117,7 +127,6 @@ def init_rag_components(model_root: Path) -> RAGComponents:
         expander=expander,
         assembler=assembler,
     )
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Supply Line 1: KPI side
@@ -306,4 +315,75 @@ def build_combined_context(
     combined = "\n".join(pieces)
     return combined, meta
 
+
+
+"""
+## ===============================================================
+Reference - older supplyline before lambda factor.
+
+def init_rag_components(model_root: Path) -> RAGComponents:
+    # Convenience factory to build all core RAG components from the standard config.
+    # centralises the initialization that you previously did in the isolation
+    # notebooks (MLConfig, Bedrock client, dimensions, metric JSON, etc.).
+    # Global config & Bedrock client
+    config = MLConfig()
+    bedrock_client = config.get_bedrock_client()
+
+    # Dimension paths
+    dim_companies = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_companies_21.parquet"
+    dim_sections = model_root / "finrag_ml_tg1/data_cache/dimensions/finrag_dim_sec_sections.parquet"
+
+    # Metric JSON path -- JSON outdated, use parquet.
+    # metric_json = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/downloaded_data.json"
+    METRIC_DATA_FACT = model_root / "finrag_ml_tg1/rag_modules_src/metric_pipeline/data/KPI_FACT_DATA_EDGAR.parquet" 
+
+    # 1) Entity adapter
+    adapter = EntityAdapter(company_dim_path=dim_companies, section_dim_path=dim_sections)
+
+    # 2) Metric pipeline
+    metric_pipeline = MetricPipeline(
+        data_path=str(METRIC_DATA_FACT),
+        company_dim_path=str(dim_companies),
+    )
+
+    # 3) Query embedder
+    embedding_cfg = config.cfg["embedding"]
+    runtime_cfg = EmbeddingRuntimeConfig.from_ml_config(embedding_cfg)
+    embedder = QueryEmbedderV2(runtime_cfg, boto_client=bedrock_client)
+
+    # 4) Filter builder
+    filter_builder = MetadataFilterBuilder(config)
+
+    # 5) Variant pipeline
+    variant_pipeline = VariantPipeline(config, adapter, embedder, bedrock_client)
+
+    # 6) S3 retriever
+    retrieval_cfg = config.get_retrieval_config()
+    retriever = S3VectorsRetriever(
+        retrieval_config=retrieval_cfg,
+        aws_access_key_id=config.aws_access_key,
+        aws_secret_access_key=config.aws_secret_key,
+        region=config.region,
+        variant_pipeline=variant_pipeline,
+    )
+
+    # 7) Sentence expander
+    expander = SentenceExpander(config)
+
+    # 8) Context assembler
+    assembler = ContextAssembler(config)
+
+    return RAGComponents(
+        adapter=adapter,
+        metric_pipeline=metric_pipeline,
+        embedder=embedder,
+        filter_builder=filter_builder,
+        variant_pipeline=variant_pipeline,
+        retriever=retriever,
+        expander=expander,
+        assembler=assembler,
+    )
+
+## ===============================================================
+"""
 

@@ -160,6 +160,12 @@ python-json-logger==2.0.7       # JSON log formatting for production
 aiocache==0.12.2                # Async in-memory caching
                                 # Prevents redundant orchestrator calls for identical queries
 
+
+## ============================================================================
+# AWS SAM CLI (for local Lambda testing)
+## ============================================================================
+aws-sam-cli
+
 # ============================================================================
 # OPTIONAL PRODUCTION ENHANCEMENTS
 # ============================================================================

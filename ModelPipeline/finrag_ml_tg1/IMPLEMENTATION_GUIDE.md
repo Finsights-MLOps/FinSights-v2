@@ -316,6 +316,21 @@ G(anchor) = {sentences from same (cik, year, section)
 - Gold answer and LLM output are both meta-commentary about data availability, so they're semantically similar.
 
 
+### Part 12: DataLoader Abstraction & Codebase Refactor
+- DataLoader Abstraction (Strategy Pattern): Factory with auto-detection, Environment Detection Logic.
+- `LocalCacheLoader - For local dev (D: drive), S3StreamingLoader - For Lambda (/tmp caching + S3)`
+- Complete refactor on 40+ files, multiple times. 
+- MLConfig Refactoring: model_root resolution, lambda-related property configs and mocking configs.
+- Testing Strategy: aws sam cli `(tried local invoke and --container, faced multiple issues)`. Yet to perfect, spent 30+ hours on this already. Out of budge time.
+- FULLY Tested: DataLoader Logic. S3StreamingLoader - Simulated Lambda environment locally, verified /tmp caching, S3 read/write operations.
+- End-to-End Integration, after complete unified query-logger correction. Logger always writes to S3 and serving notebook syncs from S3.
+
+### Pause/Todo/Research:
+- Multiple tests on lean, new env: decide a much smaller env which isnt 5-6GB. Remove research heavy evaluation packages.
+- Architecture: FastAPI - Lambda, how to connect? Magnum adapter for Lambda? or totally replace FastAPI?
+- Single codebase idea: User → API Gateway → Lambda (runs FastAPI via Mangum) → S3/Bedrock
+- User → API Gateway → Lambda (contains RAG logic) → S3/Bedrock /// direct handler as Lambda, no FastAPI.
+
 
 ---
 

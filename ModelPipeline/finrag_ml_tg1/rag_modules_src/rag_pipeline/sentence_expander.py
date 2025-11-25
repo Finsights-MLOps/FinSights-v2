@@ -59,6 +59,8 @@ import polars as pl
 
 from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
 from finrag_ml_tg1.rag_modules_src.rag_pipeline.models import S3Hit, SentenceRecord
+from finrag_ml_tg1.loaders.data_loader_strategy import DataLoaderStrategy
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,51 +86,30 @@ class SentenceExpander:
         # Returns: List[SentenceRecord] (deduplicated, ready for assembly)
     """
     
-    def __init__(self, config: MLConfig):
+
+    def __init__(self, data_loader: DataLoaderStrategy, config: MLConfig):
         """
-        Initialize sentence expander and load Stage 2 meta table with sentence_pos.
+        Initialize sentence expander with DataLoader injection.
         
         Args:
+            data_loader: DataLoader instance (LocalCacheLoader or S3StreamingLoader)
             config: MLConfig instance (for window_size + meta table path)
         
-        Raises:
-            FileNotFoundError: If Stage 2 meta table doesn't exist
-            RuntimeError: If ModelPipeline root cannot be found
+        Note:
+            Stage 2 Meta table is loaded via data_loader.load_stage2_meta()
+            This works in both local dev (filesystem) and Lambda (S3 streaming)
         """
-        # ════════════════════════════════════════════════════════════════════
-        # Resolve paths
-        # ════════════════════════════════════════════════════════════════════
-        current_file = Path(__file__).resolve()
-        model_root = None
-        
-        for parent in current_file.parents:
-            if parent.name == "ModelPipeline":
-                model_root = parent
-                break
-        
-        if model_root is None:
-            raise RuntimeError(
-                f"Cannot find 'ModelPipeline' root in path tree.\n"
-                f"Current file: {current_file}"
-            )
-        
-        self.meta_path = (
-            model_root / 
-            "finrag_ml_tg1/data_cache/meta_embeds/finrag_fact_sentences_meta_embeds.parquet"
-        )
-        
-        if not self.meta_path.exists():
-            raise FileNotFoundError(
-                f"Stage 2 meta table not found: {self.meta_path}\n"
-                f"Expected location: {self.meta_path.parent}"
-            )
+        self.data_loader = data_loader
+        self.config = config
         
         # ════════════════════════════════════════════════════════════════════
-        # Load Stage 2 Meta Table
+        # Load Stage 2 Meta Table via DataLoader
         # ════════════════════════════════════════════════════════════════════
-        logger.info(f"Loading Stage 2 meta table: {self.meta_path}")
+        logger.info("Loading Stage 2 meta table via DataLoader...")
         
-        meta_df = pl.read_parquet(self.meta_path)
+        meta_df = self.data_loader.load_stage2_meta()
+        
+        logger.info(f"✓ Loaded Stage 2 meta table: {len(meta_df):,} rows")
         
         # ════════════════════════════════════════════════════════════════════
         # CRITICAL FIX: Extract sentence_pos from sentenceID
@@ -598,3 +579,90 @@ class SentenceExpander:
         )
         
         return deduped
+    
+
+
+
+
+"""
+## ===========================================================================================================
+## SentenceExpander without DataLoader injection (legacy version) 
+
+    def __init__(self, config: MLConfig):
+        Initialize sentence expander and load Stage 2 meta table with sentence_pos.
+        
+        Args:
+            config: MLConfig instance (for window_size + meta table path)
+        
+        Raises:
+            FileNotFoundError: If Stage 2 meta table doesn't exist
+            RuntimeError: If ModelPipeline root cannot be found
+        # ════════════════════════════════════════════════════════════════════
+        # Resolve paths
+        # ════════════════════════════════════════════════════════════════════
+        current_file = Path(__file__).resolve()
+        model_root = None
+        
+        for parent in current_file.parents:
+            if parent.name == "ModelPipeline":
+                model_root = parent
+                break
+        
+        if model_root is None:
+            raise RuntimeError(
+                f"Cannot find 'ModelPipeline' root in path tree.\n"
+                f"Current file: {current_file}"
+            )
+        
+        self.meta_path = (
+            model_root / 
+            "finrag_ml_tg1/data_cache/meta_embeds/finrag_fact_sentences_meta_embeds.parquet"
+        )
+        
+        if not self.meta_path.exists():
+            raise FileNotFoundError(
+                f"Stage 2 meta table not found: {self.meta_path}\n"
+                f"Expected location: {self.meta_path.parent}"
+            )
+        
+        # ════════════════════════════════════════════════════════════════════
+        # Load Stage 2 Meta Table
+        # ════════════════════════════════════════════════════════════════════
+        logger.info(f"Loading Stage 2 meta table: {self.meta_path}")
+        
+        meta_df = pl.read_parquet(self.meta_path)
+        
+        # ════════════════════════════════════════════════════════════════════
+        # CRITICAL FIX: Extract sentence_pos from sentenceID
+        # ════════════════════════════════════════════════════════════════════
+        from finrag_ml_tg1.rag_modules_src.utilities.sentence_utils import extract_sentence_position
+        
+        logger.info("Extracting sentence_pos from sentenceID...")
+        
+        self.meta_df = extract_sentence_position(meta_df, sentenceid_col='sentenceID')
+        
+        # Validate extraction
+        failed_count = self.meta_df.filter(pl.col('sentence_pos') == -1).height
+        
+        if failed_count > 0:
+            logger.warning(
+                f"  ⚠ {failed_count} sentences have pos=-1 (malformed sentenceID)\n"
+                f"    These will get random neighbor selection if they're core hits"
+            )
+        
+        logger.info(
+            f"✓ Loaded {len(self.meta_df):,} sentences with extracted positions\n"
+            f"  Valid positions: {len(self.meta_df) - failed_count:,}\n"
+            f"  Failed extraction: {failed_count}"
+        )
+        
+        # ════════════════════════════════════════════════════════════════════
+        # Cache config parameters
+        # ════════════════════════════════════════════════════════════════════
+        retrieval_cfg = config.get_retrieval_config()
+        self.window_size = retrieval_cfg.get('window_size', 3)
+        
+        logger.info(
+            f"SentenceExpander initialized: window_size=±{self.window_size} sentences"
+        )
+"""

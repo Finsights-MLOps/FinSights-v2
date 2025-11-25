@@ -22,6 +22,12 @@ from finrag_ml_tg1.rag_modules_src.entity_adapter.company_universe import ( Comp
 from finrag_ml_tg1.rag_modules_src.entity_adapter.company_extractor import ( CompanyExtractor, ) 
 from finrag_ml_tg1.rag_modules_src.entity_adapter.string_utils import simple_fuzzy_match
 
+from finrag_ml_tg1.loaders.data_loader_strategy import DataLoaderStrategy
+from typing import Optional
+import logging
+
+# Create a module-level logger for this module
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # MODULE-LEVEL PATH CONSTANT
@@ -33,48 +39,70 @@ DEFAULT_COMPANY_DIM_PATH = Path("finrag_ml_tg1/data_cache/dimensions/finrag_dim_
 class FilterExtractor:
     """Extract ticker, year, and metric from user queries"""
     
-    def __init__(self, company_dim_path: Optional[str | Path] = None):
+
+    def __init__(self, 
+                 company_dim_path: Optional[str | Path] = None, 
+                 data_loader: Optional[DataLoaderStrategy] = None):
         """
         Initialize with company universe.
         
         Args:
             company_dim_path: Path to company dimension parquet file.
-                            If None, uses DEFAULT_COMPANY_DIM_PATH constant.
-                            Can be absolute or relative to current working directory.
+                            If None AND data_loader is None, uses DEFAULT_COMPANY_DIM_PATH.
+                            DEPRECATED: Prefer using data_loader parameter.
+            data_loader: DataLoader instance (LocalCacheLoader or S3StreamingLoader).
+                        If provided, loads company dimension via DataLoader.
         
         Raises:
             FileNotFoundError: If company dimension file doesn't exist
+            ValueError: If both company_dim_path and data_loader are None in Lambda
         """
-        # Use default if not provided
-        if company_dim_path is None:
-            company_dim_path = DEFAULT_COMPANY_DIM_PATH
-        
-        # Convert to Path object
-        company_dim_path = Path(company_dim_path)
-        
-        # Make absolute if relative (assumes cwd is ModelPipeline or contains it)
-        if not company_dim_path.is_absolute():
-            company_dim_path = company_dim_path.resolve()
-        
-        # Validate existence
-        if not company_dim_path.exists():
-            raise FileNotFoundError(
-                f"Company dimension file not found: {company_dim_path}\n"
-                f"Expected location: {DEFAULT_COMPANY_DIM_PATH}\n"
-                f"Make sure ModelPipeline/ is your working directory or on sys.path"
-            )
-        
-        # Initialize company universe and extractor
-        self.company_universe = CompanyUniverse(dim_path=company_dim_path)
-        self.company_extractor = CompanyExtractor(self.company_universe)
+        # Prioritize data_loader if provided (new pattern)
+        if data_loader is not None:
+            logger.info("FilterExtractor using DataLoader for company dimension")
+            
+            # Load via DataLoader (Polars DataFrame)
+            dim_companies_pl = data_loader.load_dimension_companies()
+            
+            # Convert to Pandas (CompanyUniverse uses pandas)
+            import pandas as pd
+            dim_companies_pd = dim_companies_pl.to_pandas()
+            
+            # Create universe from DataFrame
+            self.company_universe = CompanyUniverse.from_dataframe(dim_companies_pd)
+            self.company_extractor = CompanyExtractor(self.company_universe)
+            
+        else:
+            # Fallback to path-based loading (old pattern, for backward compatibility)
+            if company_dim_path is None:
+                company_dim_path = DEFAULT_COMPANY_DIM_PATH
+            
+            company_dim_path = Path(company_dim_path)
+            
+            # Make absolute if relative
+            if not company_dim_path.is_absolute():
+                company_dim_path = company_dim_path.resolve()
+            
+            # Validate existence
+            if not company_dim_path.exists():
+                raise FileNotFoundError(
+                    f"Company dimension file not found: {company_dim_path}\n"
+                    f"Expected location: {DEFAULT_COMPANY_DIM_PATH}\n"
+                    f"Make sure ModelPipeline/ is your working directory or on sys.path"
+                )
+            
+            # Initialize company universe and extractor (old way)
+            self.company_universe = CompanyUniverse(dim_path=company_dim_path)
+            self.company_extractor = CompanyExtractor(self.company_universe)
         
         # Keep metric map
         self.metric_map = METRIC_MAPPINGS
         
-        print(f"✓ FilterExtractor initialized with {len(self.company_universe.tickers)} companies")
-        print(f"  Using: {company_dim_path.name}")
+        logger.info(
+            f"✓ FilterExtractor initialized with {len(self.company_universe.tickers)} companies" )
+            
     
-    
+
     def extract(self, query: str) -> Dict[str, any]:
         """
         Main extraction method

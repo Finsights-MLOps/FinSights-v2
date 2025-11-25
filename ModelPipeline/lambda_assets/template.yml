@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: FinRAG Data Loader Test - Lambda Environment Testing
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 2048
+    Runtime: python3.11
+
+Resources:
+  DataLoaderTestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../  # Points to ModelPipeline/ (parent directory)
+      Handler: lambda_assets.lambda_test_data_loader.lambda_handler
+      Description: Test S3StreamingLoader in Lambda environment
+      Environment:
+        Variables:
+          MODEL_ROOT: /var/task/ModelPipeline
+          AWS_DEFAULT_REGION: us-east-1
+      Policies:
+        - S3ReadPolicy:
+            BucketName: sentence-data-ingestion
+        - Statement:
+          - Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+            Resource: '*'
