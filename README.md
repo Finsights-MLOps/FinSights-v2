@@ -94,7 +94,7 @@
 
 ## Project Structure:
 ```
-📦 FinSights-MLOps/
+📦 FinSights/
  ┣ 📂 DataPipeline/                          # SEC data ingestion & ETL orchestration
  ┃ ┣ 📂 dag/                                 # Airflow DAGs for workflow automation
  ┃ ┣ 📂 src/                                 # SEC Edgar SDK ingestion + financial metrics extraction
@@ -141,6 +141,22 @@
 Data version Control has been implemented in this Repo, and the data is stored on an s3 Bucket managed by our team. The metadata is stored in the .dvc folder.
 The DVC is to control the versions of the data used in the ingestion pipeline ,so if any data is lost / manipulated with , we can retreive the version needed.
 
+## MLFlow (for experiment tracking) : 
+The FinRAG synthesis pipeline integrates MLflow for comprehensive experiment tracking, enabling systematic monitoring of query performance, cost analysis, and model comparison across different configurations.
+
+#### Integration files
+```
+📦 FinSights/
+ ┣ 📂 DataPipeline/                          
+ ┣ 📂 ModelPipeline/                         
+ ┃ ┣ 📂 rag_modules_src/
+ ┃ ┃ ┣ 📂 synthesis_pipeline/                
+ ┃ ┃ ┃ ┣ 📜 main.py              # CLI entry point
+ ┃ ┃ ┃ ┣ 📜 mlflow_tracker.py    # Experiment management, run lifecycle, logging APIs
+ ┃ ┃ ┃ ┣ 📜 mlflow_utils.py      # Metric extraction + integration helpers
+ ┃ ┃ ┃ ┣ 📜 supply_lines.py      # Added 2 lines for metric_result
+```
+Details in [ModelPipeline MLFLOW_README](ModelPipeline/MLFLOW_README.md).
 
 ### Source Dataset Links:
 1. Primary: https://huggingface.co/datasets/khaihernlow/financial-reports-sec
