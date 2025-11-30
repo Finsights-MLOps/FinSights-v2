@@ -1,17 +1,5 @@
 from __future__ import annotations
 
-import os
-import sys
-
-# Resolve project root so that `src_metrics` is importable
-DAGS_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(DAGS_DIR, os.pardir))
-# PROJECT_ROOT now points to .../FinSights
-
-if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
-
-
 from datetime import datetime, timedelta
 import os
 from pathlib import Path
@@ -22,15 +10,14 @@ from dotenv import load_dotenv
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-import src_metrics.analytical_layer as al
-from src_metrics.analytical_layer import (
+import analytical_layer as al
+from analytical_layer import (
     run_analytical_layer_pipeline,
     upload_results_to_s3,
     send_coverage_email,
     send_success_email,
     send_failure_email,
 )
-
 # ------------------------------------------------------------------------------
 # ENV + CONFIG  (keep here)
 # ------------------------------------------------------------------------------
@@ -40,7 +27,7 @@ if ENV_PATH.exists():
     load_dotenv(ENV_PATH)
     print(f"Loaded .env from: {ENV_PATH}")
 
-EDGAR_IDENTITY = os.getenv("EDGAR_IDENTITY", "nicholas.nehemia95@gmail.com")
+EDGAR_IDENTITY = os.getenv("EDGAR_IDENTITY", "your-email@example.com")
 al.set_identity(EDGAR_IDENTITY)
 
 BASE_DIR = os.getenv(
@@ -56,22 +43,17 @@ POLITE_DELAY = float(os.getenv("EDGAR_POLITE_DELAY", "1.5"))
 # ------------------------------------------------------------------------------
 
 def run_analytical_layer_task(**context):
-    run_date = context.get("data_interval_end")
-
-    if run_date is None:
-        run_date = datetime.utcnow()  # or datetime.today()
-    else:
-        # make it naive (drop tz) if you want, but not strictly required
-        try:
-            run_date = run_date.replace(tzinfo=None)
-        except Exception:
-            pass
-
+    run_date = (
+        context["data_interval_end"].to_pydatetime()
+        if "data_interval_end" in context
+        else datetime.toda
+    )
     result = run_analytical_layer_pipeline(
         base_dir=BASE_DIR,
         polite_delay=POLITE_DELAY,
         run_date=run_date,
     )
+    # Optionally push summary via XCom
     return result["summary"]
 
 # ------------------------------------------------------------------------------
@@ -149,30 +131,33 @@ with DAG(
     description="Build + merge EDGAR analytical layer, upload to S3, and email coverage report",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
-    schedule="@monthly",   # <<<< use `schedule` instead of `schedule_interval`
+    schedule_interval="@monthly",
     catchup=False,
     tags=["finrag", "analytical_layer"],
 ) as dag:
 
-
     run_analytical_layer_op = PythonOperator(
         task_id="build_merge_and_coverage",
         python_callable=run_analytical_layer_task,
+        provide_context=True,
     )
 
     upload_to_s3_op = PythonOperator(
         task_id="upload_results_to_s3",
         python_callable=upload_to_s3_task,
+        provide_context=True,
     )
 
     send_email_op = PythonOperator(
         task_id="send_coverage_email",
         python_callable=send_email_task,
+        provide_context=True,
     )
     notify_success_op = PythonOperator(
     task_id="notify_success",
     python_callable=notify_success_task,
     trigger_rule="all_success",   # only if all tasks succeed
+    provide_context=True,
     )
 
     notify_failure_op = PythonOperator(
