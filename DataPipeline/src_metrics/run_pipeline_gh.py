@@ -56,7 +56,10 @@ def main():
             print(f"S3 Upload failed: {e}")
             sys.exit(1)
     else:
+        print(f"Skipping S3 upload: AWS_ACCESS_KEY_ID present: {bool(os.getenv('AWS_ACCESS_KEY_ID'))}")
+        print(f"Skipping S3 upload: AWS_SECRET_ACCESS_KEY present: {bool(os.getenv('AWS_SECRET_ACCESS_KEY'))}")
+        # END DEBUG
         print("Skipping S3 upload: AWS credentials not found.")
-
+        
 if __name__ == "__main__":
     main()
