@@ -15,8 +15,9 @@ def main():
     # Ensure Identity is set
     edgar_identity = os.getenv("EDGAR_IDENTITY")
     if not edgar_identity:
-        print("ERROR: EDGAR_IDENTITY environment variable is not set.")
-        sys.exit(1)
+        print("WARNING: EDGAR_IDENTITY environment variable is not set. Using default.")
+        edgar_identity = "Default User <default@example.com>"
+    
     al.set_identity(edgar_identity)
 
     # 2. Run Pipeline
