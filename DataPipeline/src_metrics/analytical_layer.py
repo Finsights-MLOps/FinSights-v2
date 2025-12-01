@@ -9,7 +9,7 @@ import time
 from typing import List, Dict
 import numpy as np
 import pandas as pd
-from edgar import set_identity, Company, MultiFinancials
+from edgartools import set_identity, Company, MultiFinancials
 
 try:
     from .gaap_aliases import GAAP_ALIASES
