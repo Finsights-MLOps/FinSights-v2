@@ -466,7 +466,7 @@ def fetch_10k_facts_for_analytical_layer(cik: str) -> pd.DataFrame:
     cik10 = _pad_cik(cik)
     cik_raw = _raw_cik(cik)
     co = Company(cik_raw)
-    facts = co.facts
+    facts = co.get_facts()
     ticker = co.get_ticker()
 
     rows = []
