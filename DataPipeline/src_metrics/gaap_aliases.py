@@ -556,11 +556,13 @@ GAAP_ALIASES = {
 }
 
 
-def get_canonical_key(metric_code: str) -> str | None:
+from typing import Optional
+
+def get_canonical_key(metric_code: str) -> Optional[str]:
     info = GAAP_ALIASES.get(metric_code)
     return info["canonical_key"] if info else None
 
 
-def get_human_label(metric_code: str) -> str | None:
+def get_human_label(metric_code: str) -> Optional[str]:
     info = GAAP_ALIASES.get(metric_code)
     return info["human_label"] if info else None

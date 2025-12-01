@@ -16,7 +16,7 @@ try:
 except ImportError:
     from gaap_aliases import GAAP_ALIASES
 
-from typing import Set, Dict, Any
+from typing import Set, Dict, Any, Optional
 
 import pandas as pd
 import smtplib
@@ -261,7 +261,7 @@ def _raw_cik(cik) -> str:
     s = "".join(ch for ch in str(cik) if ch.isdigit())
     return s.lstrip("0") or "0"   # "0000200406" -> "200406"
 
-def strip_namespace(metric: str) -> str | None:
+def strip_namespace(metric: str) -> Optional[str]:
     if not isinstance(metric, str):
         return None
     if ":" in metric:
@@ -269,7 +269,7 @@ def strip_namespace(metric: str) -> str | None:
     return metric
 
 
-def normalize_metric_key(raw_metric: str) -> str | None:
+def normalize_metric_key(raw_metric: str) -> Optional[str]:
     """
     raw_metric: us-gaap:NetIncomeLoss → canonical_key via GAAP_ALIASES
     """
@@ -300,14 +300,14 @@ def _avg_series(s: pd.Series) -> pd.Series:
     return (s + s.shift(1)) / 2
 
 
-def _sdiv(a: pd.Series | None, b: pd.Series | None) -> pd.Series:
+def _sdiv(a: Optional[pd.Series], b: Optional[pd.Series]) -> pd.Series:
     if a is None or b is None:
         return pd.Series(dtype="float64")
     out = a.astype("float64") / b.astype("float64")
     return out.replace([np.inf, -np.inf], np.nan)
 
 
-def _normalize_stmt_df(df: pd.DataFrame | None) -> pd.DataFrame | None:
+def _normalize_stmt_df(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
     if df is None or df.empty:
         return df
     if "label" not in df.columns:
@@ -318,7 +318,7 @@ def _normalize_stmt_df(df: pd.DataFrame | None) -> pd.DataFrame | None:
     return df
 
 
-def _row_to_year_series(stmt_df: pd.DataFrame | None, label_aliases: List[str]) -> pd.Series:
+def _row_to_year_series(stmt_df: Optional[pd.DataFrame], label_aliases: List[str]) -> pd.Series:
     if stmt_df is None or stmt_df.empty:
         return pd.Series(dtype="float64")
 
