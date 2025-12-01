@@ -232,7 +232,7 @@ NOT_APPLICABLE_BY_CIK = {
 # ---------------------------------------------------
 
 def _cols_to_year_index(cols):
-    yrs = pd.to_datetime(cols, errors="coerce").year
+    yrs = pd.to_datetime(cols, errors="coerce", format="mixed").year
     yrs = [
         y if not pd.isna(y)
         else (int(re.search(r"(20\d{2})", str(c)).group(1)) if re.search(r"(20\d{2})", str(c)) else np.nan)
