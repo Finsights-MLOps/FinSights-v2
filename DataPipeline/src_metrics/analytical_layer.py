@@ -1120,7 +1120,7 @@ def send_failure_email(error_msg: str, run_timestamp: str):
 def run_analytical_layer_pipeline(
     base_dir: str,
     polite_delay: float,
-    run_date: datetime | None = None,
+    run_date: Optional[datetime] = None,
 ) -> Dict[str, Any]:
     """
     Runs the full analytical layer pipeline for the last 2 years:
