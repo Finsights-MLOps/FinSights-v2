@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'DataPipeline/src_metrics/**'
+  workflow_dispatch:
+    
 
 jobs:
   deploy:
