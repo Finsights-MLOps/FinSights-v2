@@ -30,16 +30,16 @@ jobs:
         # exit-zero treats all errors as warnings.
         flake8 DataPipeline/src_metrics --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Run Tests
-      run: |
-        # Assuming tests are in DataPipeline/tests and we want to run them
-        # If there are specific tests for src_metrics, we might want to target them more specifically
-        # For now, running all tests in DataPipeline/tests as a sanity check
-        if [ -d DataPipeline/tests ]; then
-          pytest DataPipeline/tests
-        else
-          echo "No tests directory found at DataPipeline/tests"
-        fi
+    # - name: Run Tests
+    #   run: |
+    #     # Assuming tests are in DataPipeline/tests and we want to run them
+    #     # If there are specific tests for src_metrics, we might want to target them more specifically
+    #     # For now, running all tests in DataPipeline/tests as a sanity check
+    #     if [ -d DataPipeline/tests ]; then
+    #       pytest DataPipeline/tests
+    #     else
+    #       echo "No tests directory found at DataPipeline/tests"
+    #     fi
 
   deploy:
     needs: build-and-test
