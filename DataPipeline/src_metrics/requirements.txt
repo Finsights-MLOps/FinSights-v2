@@ -1,6 +1,6 @@
 pandas
 numpy
-edgartools==2.2.5
+edgartools==3.0.10
 requests
 datetime
 boto3
