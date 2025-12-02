@@ -1,0 +1,57 @@
+# CI Workflow - For Sentence Data Pipeline
+# ==============================================================================
+
+name: CI For Sentence Data
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    # Required for conda activation to work
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      # Step 1: Get the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up conda with mamba
+      - name: Setup conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: finsight-venv
+          environment-file: environment.yml
+          use-mamba: true
+
+      # Step 3: Verify environment works
+      - name: Verify environment
+        run: |
+          python --version
+          python -c "import pandas, boto3; print('Environment OK')"
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION_NAME: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          S3_BUCKET_NAME: 'sentence-data-ingestion'
+          S3_CONFIG_FILE_KEY: 'CONFIG/companies.csv'
+          S3_INGESTION_BUCKET_NAME: 'INGESTION_ASSETS'
+
+      # Step 5: Validate pipeline can load
+      - name: Validate pipeline
+        run: |
+          python pipeline_runner.py --dry-run --env dev
