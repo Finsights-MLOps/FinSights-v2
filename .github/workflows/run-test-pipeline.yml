@@ -1,0 +1,125 @@
+# ==============================================================================
+# Run Test Pipeline - Direct Execution Without Docker
+# ==============================================================================
+
+name: Run Test Pipeline
+
+on:  
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options: [dev, prod]
+      tasks:
+        description: 'Tasks (comma-separated or "full")'
+        required: false
+        default: 'full'
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION_NAME: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  S3_BUCKET_NAME: 'sentence-data-ingestion'
+  S3_CONFIG_FILE_KEY: 'CONFIG/companies.csv'
+  S3_INGESTION_BUCKET_NAME: 'INGESTION_ASSETS'
+
+jobs:
+  pipeline:
+    name: Run ETL Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 3 hours max
+    defaults:
+      run:
+        shell: bash -el {0}  # Required for conda activation
+        working-directory: DataPipeline
+    
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+          
+      - name: Setup conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: finsight-venv
+          environment-file: DataPipeline/environment.yml
+          python-version: 3.11
+          auto-activate-base: false
+
+      - name: Verify environment
+        run: |
+          python -c "import pandas, boto3, great_expectations; print('Environment OK')"
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Set environment variables
+        run: |
+          ENV="${{ github.event.inputs.environment || 'dev' }}"
+          echo "ENVIRONMENT=${ENV}" >> $GITHUB_ENV
+          echo "PIPELINE_BASE_DIR=${{ github.workspace }}" >> $GITHUB_ENV
+          
+          # Create directories
+          mkdir -p datasets logs config
+
+      - name: Download config from S3
+        run: |
+          aws s3 cp s3://finsight-config-${ENVIRONMENT}/config.json \
+            config/config.${ENVIRONMENT}.json || echo "Using local config"
+
+      - name: Run pipeline
+        id: run
+        run: |
+          TASKS="${{ github.event.inputs.tasks || 'full' }}"
+          
+          if [ "$TASKS" = "full" ]; then
+            python pipeline_runner.py --full --env ${ENVIRONMENT}
+          else
+            python pipeline_runner.py --tasks "$TASKS" --env ${ENVIRONMENT}
+          fi
+
+      - name: Upload logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-logs-${{ github.run_id }}
+          path: DataPipeline/logs/
+          retention-days: 30
+
+      - name: Upload logs to S3
+        if: always()
+        run: |
+          aws s3 sync DataPipeline/logs/ s3://finsight-logs-${ENVIRONMENT}/runs/${{ github.run_id }}/ || true
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ steps.run.outcome }}" = "success" ]; then
+            echo "## Pipeline Succeeded" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${ENVIRONMENT}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Show last log file summary
+          if ls logs/summary_*.json 1> /dev/null 2>&1; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Task Results" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat logs/summary_*.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
