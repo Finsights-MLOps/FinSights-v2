@@ -71,12 +71,7 @@ jobs:
           
           # Create directories
           mkdir -p datasets logs config
-
-      - name: Download config from S3
-        run: |
-          aws s3 cp s3://finsight-config-${ENVIRONMENT}/config.json \
-            config/config.${ENVIRONMENT}.json || echo "Using local config"
-
+      
       - name: Run pipeline
         id: run
         run: |
