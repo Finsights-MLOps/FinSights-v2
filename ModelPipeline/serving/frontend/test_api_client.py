@@ -4,12 +4,12 @@ Quick test for api_client.py
 Run with backend running in Terminal 1
 """
 
-from frontend.api_client import FinRAGClient
+from frontend.api_client import finSightClient
 
 def test_health_check():
     """Test backend health check."""
     print("\n=== Testing Health Check ===")
-    client = FinRAGClient()
+    client = finSightClient()
     health = client.health_check()
     print(f"Status: {health.get('status')}")
     print(f"Full response: {health}")
@@ -19,7 +19,7 @@ def test_health_check():
 def test_query_success():
     """Test successful query."""
     print("\n=== Testing Successful Query ===")
-    client = FinRAGClient()
+    client = finSightClient()
     
     result = client.query(
         question="What was Apple's revenue in 2017?",
@@ -45,7 +45,7 @@ def test_query_success():
 def test_query_validation():
     """Test query with invalid input (too short)."""
     print("\n=== Testing Validation Error ===")
-    client = FinRAGClient()
+    client = finSightClient()
     
     result = client.query(question="Hi")  # Too short, should fail
     
@@ -96,7 +96,7 @@ T1: Activate ML - Start BACKEND server.
 
 deactivate
 cd .\ModelPipeline\serving\
-..\finrag_ml_tg1\venv_ml_rag\Scripts\Activate.ps1
+..\finSight_ml_tg1\venv_ml_rag\Scripts\Activate.ps1
 uvicorn backend.api_service:app --reload --host 0.0.0.0 --port 8000
 
 deactivate

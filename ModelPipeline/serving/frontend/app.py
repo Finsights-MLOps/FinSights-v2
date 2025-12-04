@@ -1,6 +1,6 @@
 # frontend/app.py
 """
-FinRAG - Financial Document Intelligence System
+finSight - Financial Document Intelligence System
 
 Main Streamlit application that provides a chat interface for querying
 SEC 10-K filings using RAG (Retrieval-Augmented Generation).
@@ -13,7 +13,7 @@ Architecture:
 """
 
 import streamlit as st
-from api_client import FinRAGClient
+from api_client import finSightClient
 from state import (
     init_session_state,
     set_backend_health
@@ -31,7 +31,7 @@ from metrics import display_sidebar_stats
 # ============================================================================
 
 st.set_page_config(
-    page_title="FinRAG Assistant",
+    page_title="FinSight Assistant",
     page_icon="🏦",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -49,7 +49,7 @@ init_session_state()
 @st.cache_resource
 def get_api_client():
     """Get API client instance (singleton)."""
-    return FinRAGClient(
+    return finSightClient(
         base_url="http://localhost:8000",
         timeout=120
     )
@@ -62,7 +62,7 @@ client = get_api_client()
 # ============================================================================
 
 with st.sidebar:
-    st.title("🏦 FinRAG")
+    st.title("🏦 finSight")
     st.markdown("**Financial Document Intelligence**")
     st.markdown("---")
     
@@ -104,7 +104,7 @@ with st.sidebar:
     # About section - NATIVE STREAMLIT EXPANDER (one emoji in heading only)
     with st.expander("ℹ️ About"):
         st.markdown("""
-        **FinRAG** - Financial Document Intelligence System
+        **finSight** - Financial Document Intelligence System
         
         Analyzes SEC 10-K filings using hybrid retrieval architecture
         
@@ -153,7 +153,7 @@ with st.sidebar:
 # ============================================================================
 
 # Header
-st.title("💬 FinRAG Assistant")
+st.title("💬 finSight Assistant")
 st.markdown("Ask questions about SEC 10-K financial filings")
 st.markdown("---")
 
@@ -178,5 +178,5 @@ st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 
 with col2:
-    st.caption("FinRAG v1.0 | IE7374 MLOps Capstone Project")
+    st.caption("finSight v1.0 | IE7374 MLOps Capstone Project")
     st.caption("Built with Streamlit + FastAPI + AWS Bedrock")

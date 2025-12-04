@@ -29,7 +29,7 @@ STATE SCHEMA:
 
 # frontend/state.py
 """
-Session state management for FinRAG frontend.
+Session state management for finSight frontend.
 
 Handles chat history, cost tracking, and UI preferences using Streamlit's
 session_state. Provides clean interface for state initialization and updates.

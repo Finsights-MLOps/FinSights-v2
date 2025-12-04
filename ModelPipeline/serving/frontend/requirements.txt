@@ -1,5 +1,5 @@
 # ============================================================================
-# FinRAG Frontend - Streamlit UI
+# finSight Frontend - Streamlit UI
 # Purpose: User interface for query submission and result display
 # Installation: Separate lightweight environment (venv_frontend)
 # ============================================================================

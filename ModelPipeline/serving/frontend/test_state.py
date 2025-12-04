@@ -111,7 +111,7 @@ T1: Activate ML - Start BACKEND server.
 
 deactivate
 cd .\ModelPipeline\serving\
-..\finrag_ml_tg1\venv_ml_rag\Scripts\Activate.ps1
+..\finSight_ml_tg1\venv_ml_rag\Scripts\Activate.ps1
 uvicorn backend.api_service:app --reload --host 0.0.0.0 --port 8000
 
 deactivate

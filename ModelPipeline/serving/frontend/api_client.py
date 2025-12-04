@@ -11,7 +11,7 @@ OUTPUT: QueryResponse dict or ErrorResponse dict
 
 -----------------------------------------------------------------------------------------------------------------
 
-class FinRAGClient:
+class finSightClient:
     - __init__(base_url, timeout)
     - health_check() → dict
     - query(question, ...) → dict
@@ -26,7 +26,7 @@ Error response has: query, error, error_type, stage, timestamp
 -----------------------------------------------------------------------------------------------------------------
 
 Usage:
-    client = FinRAGClient()
+    client = finSightClient()
     result = client.query("What was Apple's revenue?")
 
 """
@@ -36,13 +36,13 @@ Usage:
 
 # frontend/api_client.py
 """
-Backend API client for FinRAG.
+Backend API client for finSight.
 
 Handles all HTTP communication with the FastAPI backend.
 Provides clean interface for health checks and query submission.
 
 Usage:
-    client = FinRAGClient()
+    client = finSightClient()
     result = client.query("What was Apple's revenue?")
 """
 
@@ -51,9 +51,9 @@ from typing import Dict, Optional, Any
 from datetime import datetime
 
 
-class FinRAGClient:
+class finSightClient:
     """
-    Client for communicating with FinRAG FastAPI backend.
+    Client for communicating with finSight FastAPI backend.
     
     Attributes:
         base_url: Backend API base URL (default: http://localhost:8000)

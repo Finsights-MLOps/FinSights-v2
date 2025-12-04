@@ -16,7 +16,7 @@ DISPLAY PATTERN:
 
 # frontend/metrics.py
 """
-Metrics display components for FinRAG frontend.
+Metrics display components for finSight frontend.
 
 Handles rendering of query metadata, cost tracking, and performance stats.
 
@@ -29,7 +29,7 @@ Usage:
 
 # frontend/metrics.py
 """
-Metrics display components for FinRAG frontend.
+Metrics display components for finSight frontend.
 
 Handles rendering of query metadata, cost tracking, and performance stats.
 
