@@ -26,13 +26,16 @@ jobs:
         run: |
           docker build -t metrics-app DataPipeline/src_metrics
 
+      - name: List Docker images
+        run: docker images
+
       - name: Run Docker container 
         run: |
           docker run --rm \
-            -e EDGAR_IDENTITY=${{ secrets.EDGAR_IDENTITY }} \
+            -e EDGAR_IDENTITY=${{ secrets.EDGAR_IDENTITY}} \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            -e AWS_REGION=${{ secrets.AWS_REGION || 'us-east-1' }} \
-            -e FINRAG_S3_BUCKET=${{ secrets.FINRAG_S3_BUCKET || 'sentence-data-ingestion' }} \
+            -e AWS_REGION=${{ secrets.AWS_REGION}} \
+            -e FINRAG_S3_BUCKET=${{ secrets.FINRAG_S3_BUCKET}} \
             -e ANALYTICAL_LAYER_BASE_DIR='metrics_output' \
             metrics-app
