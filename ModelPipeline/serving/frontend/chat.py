@@ -15,7 +15,7 @@ UI PATTERN:
 
 # frontend/chat.py
 """
-Chat interface components for finSight frontend.
+Chat interface components for FinSight frontend.
 
 Handles chat message rendering, user input, and query submission.
 
@@ -30,7 +30,7 @@ import streamlit as st
 from typing import Dict, Any
 
 # FIXED: Relative imports (no 'frontend.' prefix)
-from api_client import finSightClient
+from api_client import FinSightClient
 from state import (
     add_user_message,
     add_assistant_message,
@@ -83,14 +83,14 @@ def render_chat_history() -> None:
         render_chat_message(message)
 
 
-def handle_user_input(client: finSightClient) -> None:
+def handle_user_input(client: FinSightClient) -> None:
     """
     Handle user input from chat input box.
     
     Processes new user questions, calls backend API, and updates state.
     
     Args:
-        client: finSightClient instance for API calls
+        client: FinSightClient instance for API calls
     """
     # Chat input at bottom of page
     prompt = st.chat_input("Ask a question about SEC 10-K filings...")

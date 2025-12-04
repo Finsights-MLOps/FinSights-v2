@@ -1,6 +1,6 @@
 # frontend/app.py
 """
-finSight - Financial Document Intelligence System
+FinSight - Financial Document Intelligence System
 
 Main Streamlit application that provides a chat interface for querying
 SEC 10-K filings using RAG (Retrieval-Augmented Generation).
@@ -15,7 +15,7 @@ Architecture:
 """
 
 import streamlit as st
-from api_client import finSightClient
+from api_client import FinSightClient
 from state import (
     init_session_state,
     set_backend_health
@@ -58,6 +58,7 @@ app.py: doesn't need to understand deployment environments
 # Initialize API client (cached so it's only created once)
 @st.cache_resource
 def get_api_client():
+<<<<<<< Updated upstream
     """
     Get API client instance (singleton).
     Backend URL is read from config (environment-aware).
@@ -69,6 +70,13 @@ def get_api_client():
     ## previous: option 1, 2. 
     ## return finSightClient( base_url="http://localhost:8000", timeout=120)
     ## return finSightClient()  # ← uses api_client's env logic
+=======
+    """Get API client instance (singleton)."""
+    return FinSightClient(
+        base_url="http://localhost:8000",
+        timeout=120
+    )
+>>>>>>> Stashed changes
 
 client = get_api_client()
 
@@ -78,7 +86,7 @@ client = get_api_client()
 # ============================================================================
 
 with st.sidebar:
-    st.title("🏦 finSight")
+    st.title("🏦 FinSight")
     st.markdown("**Financial Document Intelligence**")
     st.markdown("---")
     
@@ -120,7 +128,7 @@ with st.sidebar:
     # About section - NATIVE STREAMLIT EXPANDER (one emoji in heading only)
     with st.expander("ℹ️ About"):
         st.markdown("""
-        **finSight** - Financial Document Intelligence System
+        **FinSight** - Financial Document Intelligence System
         
         Analyzes SEC 10-K filings using hybrid retrieval architecture
         
@@ -169,7 +177,7 @@ with st.sidebar:
 # ============================================================================
 
 # Header
-st.title("💬 finSight Assistant")
+st.title("💬 FinSight Assistant")
 st.markdown("Ask questions about SEC 10-K financial filings")
 st.markdown("---")
 
@@ -194,5 +202,5 @@ st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 
 with col2:
-    st.caption("finSight v1.0 | IE7374 MLOps Capstone Project")
+    st.caption("FinSight v1.0 | IE7374 MLOps Capstone Project")
     st.caption("Built with Streamlit + FastAPI + AWS Bedrock")

@@ -11,7 +11,7 @@ OUTPUT: QueryResponse dict or ErrorResponse dict
 
 -----------------------------------------------------------------------------------------------------------------
 
-class finSightClient:
+class FinSightClient:
     - __init__(base_url, timeout)
     - health_check() → dict
     - query(question, ...) → dict
@@ -31,7 +31,7 @@ CLOUD - os.getenv("BACKEND_URL", ...) returns "http://backend:8000" // (K8s serv
 -----------------------------------------------------------------------------------------------------------------
 
 Usage:
-    client = finSightClient()
+    client = FinSightClient()
     result = client.query("What was Apple's revenue?")
 
 """
@@ -41,13 +41,13 @@ Usage:
 
 # frontend/api_client.py
 """
-Backend API client for finSight.
+Backend API client for FinSight.
 
 Handles all HTTP communication with the FastAPI backend.
 Provides clean interface for health checks and query submission.
 
 Usage:
-    client = finSightClient()
+    client = FinSightClient()
     result = client.query("What was Apple's revenue?")
 """
 
@@ -58,9 +58,9 @@ import os
 from config import BACKEND_URL, API_TIMEOUT
 ## why os?: things are gonna get on cloud soon. we use os.environ. > patterns. 
 
-class finSightClient:
+class FinSightClient:
     """
-    Client for communicating with finSight FastAPI backend.
+    Client for communicating with FinSight FastAPI backend.
     
     Attributes:
         base_url: Backend API base URL (default: http://localhost:8000)
