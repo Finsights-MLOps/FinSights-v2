@@ -45,7 +45,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION_NAME: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          AWS_REGION_NAME: 'us-east-1'
           S3_BUCKET_NAME: 'sentence-data-ingestion'
           S3_CONFIG_FILE_KEY: 'CONFIG/companies.csv'
           S3_INGESTION_BUCKET_NAME: 'INGESTION_ASSETS'
