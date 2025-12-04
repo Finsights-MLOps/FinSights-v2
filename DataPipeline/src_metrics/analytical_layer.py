@@ -1259,7 +1259,7 @@ def run_analytical_layer_pipeline(
         print(f"[analytical_layer] Previous missing (last2yrs): {missing_prev}")
         print(f"[analytical_layer] New missing      (last2yrs): {missing_new}")
 
-        if missing_new < missing_prev:
+        if missing_new <= missing_prev:
             df_prev_keep = df_prev[~df_prev["year"].isin(last2_years)]
             df_merged = pd.concat([df_prev_keep, df_new], ignore_index=True)
 
@@ -1270,7 +1270,7 @@ def run_analytical_layer_pipeline(
             print("[analytical_layer] ✅ Merged. New final shape:", df_merged.shape)
         else:
             summary["merged"] = False
-            summary["reason"] = "Skipped merge: new coverage is equal or worse than previous data."
+            summary["reason"] = "Skipped merge: new coverage is worse than previous data."
             print("[analytical_layer] ⚠️ Merge skipped; final parquet unchanged.")
 
     # Save metadata locally
