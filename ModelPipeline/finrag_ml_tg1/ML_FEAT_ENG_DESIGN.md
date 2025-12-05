@@ -1,11 +1,22 @@
-## Deep Architectural Proof: Why ML Feature Engineering ≠ Data Engineering
+## Architectural case studies: 
+### Why ML Feature Engineering ≠ (or not within subset of) Data Engineering
 
 **Proofs**: This doc is meant for layers of proof from industry standards, production systems, and framework architectures. The main proof that this document wants to simply provide is that the design behind why ML feature engineering or ML feature infrastructure is separate from data pipelines is explained clearly. A case study with TensorFlow or any other separation patterns are learned and displayed here. Some of the core reasons are that feature definitions, feature specific creations, image or text embeddings, feature computations alongside the models and checkpoints are something that are heavily coupled with model pipeline and model logic. It doesn't make sense to carry over that ML heavy resource into a data engineering layer or a data ingestion layer.
 
 - TensorFlow explicitly separates data engineering from ML feature engineering.
 - tf.keras.layers.TextVectorization doesn't just "process text" - it learns vocabulary from the training data and saves it with the model. preprocessing logic is embedded in the model artifact.
 - Similarity with mine: model-specific features (1024d Cohere vectors) that the RAG pipeline depends on.
-
+- Data engineering / input pipelines live in tf.data + TFX ExampleGen/data-validation world.
+- Feature engineering / embeddings live either as Keras preprocessing layers or TF Transform graphs.
+- A feature store (Uber Michelangelo, Feast, Vertex AI Feature Store) is explicitly described as an ML-specific data system that runs feature pipelines, stores feature values, and serves them consistently for training and online inference.
+- Link: `https://feast.dev/blog/what-is-a-feature-store/`
+- `https://www.tensorflow.org/tfx/guide/transform`
+  - "The Transform TFX pipeline component performs feature engineering on tf.Examples emitted from an ExampleGen component… and emits both a SavedModel as well as statistics on pre- and post-transform data."
+  - we ingest data with ExampleGen; Transform is explicitly “the feature engineering place” --> emits a SavedModel.
+- `https://cloud.google.com/blog/topics/developers-practitioners/model-training-cicd-system-part-i`
+- From the link: "..the most important files for understanding TFX pipeline are listed"
+  - features and feature_preprocessing exist in model/ not in data/
+- Any model dependant features: embedding model, tokenizer, or configuration, must be versioned and owned together with the ML pipeline, not with generic ETL/table schemas.
 
 ## TensorFlow Architectural Patterns
 ```
