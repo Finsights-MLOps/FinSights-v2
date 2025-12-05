@@ -1,0 +1,76 @@
+# ============================================================================
+# CORE DATA PROCESSING (MANDATORY)
+# rem: venv only isolates packages, not Python itself.
+# 3.12 - base python. 
+# ============================================================================
+polars>=1.0.0
+
+# C code incompatible with Python 3.12's NumPy changes.
+# pandas==2.1.0               # Specific version from your project
+
+pandas>=2.2.0
+
+# now oudated because; disutils based conflict, deprecated package
+# numpy==1.24.3               # Specific version from your project
+numpy>=1.26.0,<2.0
+pyarrow>=14.0.0             # Parquet file reading
+
+# ============================================================================
+# TEXT PROCESSING (MANDATORY - Used in MetricPipeline)
+# ============================================================================
+regex>=2023.12.0            # Used in metric pipeline
+
+# unmaintained, broken on 3.12 // New Levenshtein (capitalized) → actively maintained, supports 3.12
+# rapidfuzz → faster replacement for fuzzywuzzy, includes fuzzy matching.
+# python-Levenshtein==0.21.1  # Fuzzy matching for entity extraction
+# fuzzywuzzy==0.18.0          # Fuzzy string matching
+
+Levenshtein>=0.25.0
+rapidfuzz>=3.0.0
+
+
+# ============================================================================
+# AWS SERVICES (MANDATORY)
+# ============================================================================
+boto3>=1.35.0               # S3, Bedrock API
+botocore>=1.35.0
+
+# ============================================================================
+# CONFIGURATION & SECRETS (MANDATORY)
+# ============================================================================
+pyyaml>=6.0.0               # ml_config.yaml reading
+python-dotenv>=1.0.0        # .env file support (local dev)
+
+# ============================================================================
+# WEB FRAMEWORK - BACKEND (MANDATORY)
+# ============================================================================
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# ============================================================================
+# WEB FRAMEWORK - FRONTEND
+# ============================================================================
+# streamlit>=1.30.0
+# requests>=2.31.0            # Frontend calls FastAPI backend
+
+# ============================================================================
+# LOGGING (MANDATORY)
+# ============================================================================
+loguru==0.7.2
+
+# ============================================================================
+# EXCLUDED FROM (Evaluation/Development Only)
+# ============================================================================
+# torch                     # NOT NEEDED (no local inference)
+# transformers              # NOT NEEDED (use Bedrock API)
+# bert-score                # EVALUATION ONLY
+# scikit-learn              # NOT NEEDED (check if used)
+# sentence-transformers     # NOT NEEDED (Bedrock generates embeddings)
+# jupyter                   # DEVELOPMENT ONLY
+# notebook                  # DEVELOPMENT ONLY
+# matplotlib                # EVALUATION ONLY
+# seaborn                   # EVALUATION ONLY
+# nltk                      # NOT USED (confirmed)
+

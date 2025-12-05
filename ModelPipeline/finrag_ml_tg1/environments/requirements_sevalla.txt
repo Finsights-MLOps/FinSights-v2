@@ -3,6 +3,8 @@
 
 # ============================================================================
 # CORE DATA PROCESSING (MANDATORY)
+# rem: venv only isolates packages, not Python itself.
+# 3.12 - base python. 
 # ============================================================================
 polars>=1.0.0
 
