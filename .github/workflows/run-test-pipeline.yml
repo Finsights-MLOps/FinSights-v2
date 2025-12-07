@@ -73,15 +73,14 @@ jobs:
           mkdir -p datasets logs config
       
       - name: Run pipeline
-        id: run
-        working-directory: DataPipeline
+        id: run        
         run: |
           TASKS="${{ github.event.inputs.tasks || 'full' }}"
           
           if [ "$TASKS" = "full" ]; then
-            python pipeline_runner.py --full --env ${ENVIRONMENT}
+            python DataPipeline/pipeline_runner.py --full --env ${ENVIRONMENT}
           else
-            python pipeline_runner.py --tasks "$TASKS" --env ${ENVIRONMENT}
+            python DataPipeline/pipeline_runner.py --tasks "$TASKS" --env ${ENVIRONMENT}
           fi
 
       - name: Upload logs artifact
