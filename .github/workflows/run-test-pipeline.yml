@@ -25,6 +25,7 @@ env:
   S3_BUCKET_NAME: 'sentence-data-ingestion'
   S3_CONFIG_FILE_KEY: 'CONFIG/companies.csv'
   S3_INGESTION_BUCKET_NAME: 'INGESTION_ASSETS'
+  LOCAL_DATA_PATH: ${{ github.workspace }}/DataPipeline/config/companies.csv
 
 jobs:
   pipeline:
