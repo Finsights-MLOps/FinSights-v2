@@ -1,5 +1,5 @@
 """
-Configuration management for FinRAG backend.
+Configuration management for FinRAG backend. C1.
 
 Loads settings from:
 1. Environment variables (.env file)

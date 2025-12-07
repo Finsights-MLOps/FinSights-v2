@@ -181,10 +181,6 @@ datasets/
 
 *.ndjson
 
-# Virtual Environments for Frontend Serving
-ModelPipeline/serving/frontend/venv_frontend/
-ModelPipeline/finrag_ml_tg1/venv_ml_rag/
-
 # Notebooks
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.ipynb
 # ModelPipeline/finrag_ml_tg1/notebooks-experiments/**/*.py

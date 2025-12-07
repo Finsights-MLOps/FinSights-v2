@@ -1,5 +1,5 @@
 """
-FinSights Home Page - Polished UI with Streamlit Components
+FinSights Home Page - Polished UI with Streamlit Components. C1
 """
 
 import streamlit as st
