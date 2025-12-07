@@ -113,10 +113,14 @@ class QueryResponse(BaseModel):
     answer: str
     context: str
     metadata: ResponseMetadata
-    exports: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="File paths for exported logs/context (optional)"
-    )
+
+    ## NOTE: Exports are internal backend concern, not exposed to API consumers
+    # The frontend should not have a design where they access the disk usage or spillage. 
+    # It could be a security risk for the hardware or cloud or disk.
+        # exports: Optional[Dict[str, Any]] = Field(
+        #     default=None,
+        #     description="File paths for exported logs/context (optional)"
+        # )
 
 
 class ErrorResponse(BaseModel):

@@ -403,6 +403,160 @@ class QueryLogger:
         
         return df_recent
 
+
+
+    def sync_exports_to_local(
+        self, 
+        local_exports_dir: Optional[Path] = None,
+        max_files: int = 100
+    ) -> Tuple[int, int]:
+        """
+        Download context and response exports from S3 to local directory.
+        
+        Syncs files from:
+            s3://sentence-data-ingestion/DATA_MERGE_ASSETS/LOGS/FINRAG/contexts/ → local/exports/contexts/
+            s3://sentence-data-ingestion/DATA_MERGE_ASSETS/LOGS/FINRAG/responses/ → local/exports/responses/
+        
+        Skips files that are already up-to-date locally (timestamp check).
+        
+        Args:
+            local_exports_dir: Target directory (defaults to exports/ next to logs/)
+            max_files: Maximum files to download per folder (prevents runaway downloads)
+        
+        Returns:
+            Tuple of (downloaded_count, skipped_count)
+        
+        Example:
+            >>> logger = QueryLogger()
+            >>> downloaded, skipped = logger.sync_exports_to_local()
+            >>> print(f"✓ Downloaded {downloaded} files, {skipped} up-to-date")
+        """
+        # Determine local export directory
+        if local_exports_dir is None:
+            if self.local_sync_dir is None:
+                raise RuntimeError(
+                    "No local_sync_dir configured. "
+                    "Cannot determine export directory."
+                )
+            # Place exports/ next to logs/ directory
+            local_exports_dir = self.local_sync_dir / "exports"
+        
+        # Create subdirectories
+        contexts_dir = local_exports_dir / "contexts"
+        responses_dir = local_exports_dir / "responses"
+        contexts_dir.mkdir(parents=True, exist_ok=True)
+        responses_dir.mkdir(parents=True, exist_ok=True)
+        
+        downloaded = 0
+        skipped = 0
+        
+        # FIXED: Use correct S3 paths matching your bucket structure
+        # Sync contexts folder
+        logger.info("Syncing contexts from S3...")
+        d, s = self._sync_s3_folder(
+            s3_prefix="DATA_MERGE_ASSETS/LOGS/FINRAG/contexts/",  # ← FIXED
+            local_dir=contexts_dir,
+            max_files=max_files
+        )
+        downloaded += d
+        skipped += s
+        
+        # Sync responses folder
+        logger.info("Syncing responses from S3...")
+        d, s = self._sync_s3_folder(
+            s3_prefix="DATA_MERGE_ASSETS/LOGS/FINRAG/responses/",  # ← FIXED
+            local_dir=responses_dir,
+            max_files=max_files
+        )
+        downloaded += d
+        skipped += s
+        
+        logger.info(f"✓ Export sync complete: {downloaded} downloaded, {skipped} skipped")
+        return (downloaded, skipped)
+
+
+    def _sync_s3_folder(
+        self,
+        s3_prefix: str,
+        local_dir: Path,
+        max_files: int
+    ) -> Tuple[int, int]:
+        """
+        Helper: Download files from S3 prefix to local directory.
+        
+        Args:
+            s3_prefix: S3 key prefix (e.g., "DATA_MERGE_ASSETS/LOGS/FINRAG/contexts/")
+            local_dir: Local target directory
+            max_files: Max files to download (safety limit)
+        
+        Returns:
+            (downloaded_count, skipped_count)
+        """
+        downloaded = 0
+        skipped = 0
+        
+        try:
+            # List objects in S3 folder
+            logger.debug(f"  Listing S3: s3://{self.bucket}/{s3_prefix}")
+            
+            response = self.s3_client.list_objects_v2(
+                Bucket=self.bucket,
+                Prefix=s3_prefix,
+                MaxKeys=max_files
+            )
+            
+            if 'Contents' not in response:
+                logger.info(f"  No files found in s3://{self.bucket}/{s3_prefix}")
+                return (0, 0)
+            
+            file_count = len([obj for obj in response['Contents'] if not obj['Key'].endswith('/')])
+            logger.info(f"  Found {file_count} file(s) in S3")
+            
+            # Download each file
+            for obj in response['Contents']:
+                s3_key = obj['Key']
+                
+                # Skip folder markers (keys ending in /)
+                if s3_key.endswith('/'):
+                    continue
+                
+                # Extract filename (last part of key)
+                filename = Path(s3_key).name
+                local_file = local_dir / filename
+                
+                # Check if local file is up-to-date
+                s3_modified = obj['LastModified']
+                
+                if local_file.exists():
+                    local_modified = datetime.fromtimestamp(
+                        local_file.stat().st_mtime,
+                        tz=s3_modified.tzinfo
+                    )
+                    
+                    if local_modified >= s3_modified:
+                        skipped += 1
+                        continue  # Skip this file
+                
+                # Download file
+                self.s3_client.download_file(
+                    self.bucket,
+                    s3_key,
+                    str(local_file)
+                )
+                
+                downloaded += 1
+                logger.debug(f"  ✓ Downloaded {filename}")
+            
+            logger.info(f"  Downloaded: {downloaded}, Skipped: {skipped}")
+            return (downloaded, skipped)
+            
+        except Exception as e:
+            logger.error(f"Error syncing folder {s3_prefix}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return (downloaded, skipped)
+
+
     ## =================================================================================
     ############### Cost Sum, Empty log df, Empty Cost Sum #############################
 

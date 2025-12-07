@@ -96,6 +96,18 @@ Average Cosine: 0.675        ← GOOD
    - Test HTTP client independently; monolith requires mocking entire Streamlit runtime.
    - ( Keywords: Dependency Inversion Principles / Contract-Driven / Solid Patterns )
 
+### Ground-Up Python Orchestration vs Framework Abstractions
+- We realize RAG chains or Frameworks like LangChain are powerful: Ecosystem with pre-built connectors for 50+ vector databases and LLM providers.
+- **FinSights** Uses Primitive Python Orchestration:
+  - Every AWS API call is explicit—you see token counts, model invocations, and S3 operations
+  - Debug why a query costs $0.50 vs $0.02 by tracing exact function calls
+  - Orchestration modules are pure Python, no hidden framework layers. Architectural Control is high.
+  - EntityAdapter, MetricPipeline, S3VectorsRetriever are pure functions with deterministic behavior
+  - Stack traces point to YOUR code, not framework internals 500 lines deep!
+  - We also thought, eliminate framework abstraction overhead for latency-sensitive serving
+  - Direct AWS SDK calls avoid unnecessary serialization/deserialization layers
+  - Evaluators (ROUGE-L, BERTScore, BLEURT-20) operate on raw model outputs.
+
 
 
 ### 11. Key Decisions for Design-Choices:
@@ -106,35 +118,36 @@ Average Cosine: 0.675        ← GOOD
    - Prefer avoiding PYTHONPATH, sys.resolve[] based hacks. 
    - Using fixed root + walk up, absolute imports pattern for all code.
 2. Atomic Deployment Unit:
-   - Usually, the model + serving layer + UI constitute a single deployment artifact.
-   - Followed the similar pattern here.
+   - Usually, the model + serving layer + UI constitute a single deployment artifact. Followed the similar pattern here.
    - Google's TensorFlow Serving: Model + API in same repo, Hugging Face Spaces: Model + Gradio UI in same directory.
    - Orchestrator expects model_root parameter - serving must be relative to it.
-3. Technical Justification for tracking approach:
+1. Technical Justification for tracking approach:
    - Embedded Instrumentation > Separate Tracking. 
    - no discrepancies between 'experiment code' and 'production code'.
    - MLFlow: persistent infrastructure ($50-100/month for managed hosting). For a system with sub-$0.017 query costs, adding $50/month overhead is economically unjustifiable.
    - no model training - it's inference serving algorithms and components.
    - synthesis_pipeline/ logs every query with metadata (tokens, cost, latency) - this IS the tracking, just following serverless patterns.
-4. Environments in Specific Locations:
+2. Environments in Specific Locations:
    - Each environment lives with its deployment unit.
    - finrag_ml_tg1/ - one backend environment for all ML code + FastAPI wrapper.
    - `BACKEND_ENV = "finrag_ml_tg1/venv_ml_rag"  # Must be here for imports to work`
    - `FRONTEND_ENV = "serving/frontend/venv_frontend"  # Must be here for serving isolation`
-5. Why Multiple Environments:
+   - Update! `BACKEND_END` now becomes te minimal `venv_serving` within 0.3GB for 'ML APP' serving.
+   - The proper `venv_ml_rag` can be used for heavy torch libs, debugging, analytics and dev work.
+3. Why Multiple Environments:
    - Boundary Enforcement, Basic Deployment Independence, Dependency Conflict Avoidance, Build Time Efficiency.
    - Makes no sense for Web-Dev team UI/UX to install Data Engineering team's libraries. Same goes for ML research team.
    - Example:
      - `venv_ml_rag:      3GB`   - boto3, transformers, sentence-transformers, polars, bluert, torch etc.
      - `venv_frontend:    50MB`  - streamlit, requests, pandas (minimal)
      - !! updated. now, we have 3 environments. `venv_serving` within 0.3GB for 'ML APP' serving, as we dont want to burden the consumers to have all the libs which developers, researchers use!
-6. Update! Logics around single-client instantiations and caching, making microservices architecture 'cleaner', making sure backend, frontend, base_urls have clear separations and configurability; such new refactors and work has been done recently.
+4. Update! Logics around single-client instantiations and caching, making microservices architecture 'cleaner', making sure backend, frontend, base_urls have clear separations and configurability; such new refactors and work has been done recently.
 
 
 ### P.S.: About minimal tech debt:
 - 95% of modules: adapters, rag modules, configs loader modules, data loaders/streamers, orchestrator, synthesis modules, etc. and lightweight logging: are perfectly modular.
 - In one module, conceptually, 'Retrieval backend spines' (`platform_core_notebooks`), I recognize some of the notebook logics aren't fully modularized python scripts - that's my tech debt, but with my current budget hours and with every other modules' work, research volume, across many weeks and months, I couldn't handle finishing it. There are only 2-4 core logics to be modularized.
-- For now, the notebooks are well-structured with clear exec flows, documented, produce high-quality visual outputs when executed. They have helpful embedding-audit execution history, they have analytic queries and tabular logs quickly after doing the rag's necessary, time-taking, cloud operations - PutVectors or Generate embeds operations. 
+- For now, the notebooks are well-structured with clear exec flows, documented, produce high-quality visual outputs when executed. They have helpful embedding-audit execution history, they have analytic queries and tabular logs quickly after doing the rag's necessary, time-taking, cloud operations - PutVectors or Generate embeds operations. These are only dormant 'infra setup' notebooks, they are not iteratively run for every query.
 - The scientific coding notebook approach is still very valuable here. They are very cleanly explained in markdown cells.
 - These are also not run for every query, they are 'Preparation' infrastructure and not daily 'Serving' infrastructure. My philosophy is that, these are handled once a year, twice a year or on-demand.
 - 'Automated gold tests' Anchors, and Gold-Suite with scores are also in notebook, with clean, visual appeal - coding. These havent been automated for 'every' run because these are expensive. They run 60+, or 100+ independent semantic searches depending on anchor sizes. Further, next sets of Gold P3 tests call LLM synthesis for final evaluation answer. They are expensive too.

@@ -98,11 +98,11 @@ def handle_user_input(client: FinSightClient) -> None:
     if prompt:
         # Validate input length (client-side check)
         if len(prompt) < 10:
-            st.error("❌ Question must be at least 10 characters long.")
+            st.error("[Hey!] Question must be at least 10 characters long.")
             return
         
         if len(prompt) > 500:
-            st.error("❌ Question must be less than 500 characters.")
+            st.error("[Hey!] Question must be less than 500 characters.")
             return
         
         # Add user message to history
@@ -114,7 +114,7 @@ def handle_user_input(client: FinSightClient) -> None:
         
         # Process query with loading indicator
         with st.chat_message("assistant"):
-            with st.spinner("🔍 Processing your question..."):
+            with st.spinner("[Searching..!] Processing your question..."):
                 # Get model_key from session state
                 model_key = st.session_state.get("model_key")
                 
@@ -176,6 +176,6 @@ def render_clear_button() -> None:
     #: Relative import
     from state import clear_chat_history
     
-    if st.sidebar.button("🗑️ Clear Chat History", use_container_width=True):
+    if st.sidebar.button("Clear Chat History", use_container_width=True):
         clear_chat_history()
         st.rerun()

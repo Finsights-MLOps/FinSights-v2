@@ -72,6 +72,14 @@ class BackendConfig(BaseSettings):
         description="Log format: 'text' or 'json'"
     )
     
+
+    #: Export control for debugging
+    enable_exports: bool = Field(
+        default=True,  # True in dev, False in production
+        description="Export context and response files for debugging (backend dev feature)"
+    )
+
+
     # ========================================================================
     # CACHING
     # ========================================================================

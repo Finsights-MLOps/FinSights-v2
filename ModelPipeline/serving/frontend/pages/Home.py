@@ -1,227 +1,210 @@
-# frontend/pages/1_Home.py
 """
-FinSight Home Page - Product landing page with features and examples.
-
-Uses pure Streamlit components (no HTML/CSS injection):
-- st.columns() for layout
-- st.metric() for stats
-- st.container() for sections
-- st.button() for navigation
+FinSights Home Page - Polished UI with Streamlit Components
 """
 
 import streamlit as st
-import sys
-from pathlib import Path
 
-# CRITICAL: Add parent directory to Python path
-# This allows imports from frontend/ folder
-parent_dir = Path(__file__).parent.parent
-if str(parent_dir) not in sys.path:
-    sys.path.insert(0, str(parent_dir))
 
-# Now imports should work
-from api_client import FinSightClient
-from state import init_session_state
-from sidebar import render_sidebar
-from config import BACKEND_URL, API_TIMEOUT
+def render_home():
+    """Render homepage with polished UI."""
 
-# ============================================================================
-# PAGE CONFIGURATION
-# ============================================================================
+    # =======================================================================
+    # HERO
+    # =======================================================================
 
-st.set_page_config(
-    page_title="FinSight - Home",
-    page_icon="💹",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+    st.markdown(
+        """
+        <div class="hero-headline">
+            Markets shouldn't overwhelm you. Toss dense filings—
+            <span class="gradient-text">Find Clarity. Find Interpretations. Power your Financial Research</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-# ============================================================================
-# INITIALIZATION
-# ============================================================================
+    col_left, col_right = st.columns([3, 2], gap="large")
 
-# Initialize session state
-init_session_state()
-
-# Initialize API client (cached)
-@st.cache_resource
-def get_api_client():
-    """Get API client instance (singleton)."""
-    return FinSightClient(base_url=BACKEND_URL, timeout=API_TIMEOUT)
-
-client = get_api_client()
-
-# ============================================================================
-# SIDEBAR (SHARED ACROSS ALL PAGES)
-# ============================================================================
-
-render_sidebar(client)
-
-# ============================================================================
-# HERO SECTION
-# ============================================================================
-
-st.title("💹 FinSight")
-
-# Two-column layout for hero
-hero_left, hero_right = st.columns([3, 2], gap="large")
-
-with hero_left:
-    st.markdown("## Markets shouldn't overwhelm — **filings should explain**")
-    
-    st.markdown("""
-    FinSight turns raw SEC 10-K filings into a question-and-answer surface for your research.
-    Ask questions, surface KPIs, and trace every answer back to the underlying text in seconds.
-    """)
-    
-    # CTA button (FIXED: No emoji in filename)
-    # if st.button("🚀 Try the 10-K Chatbot", type="primary", use_container_width=True):
-    #     st.switch_page("pages/2_Chatbot.py")
-    
-    st.caption("💡 No trading advice, just transparent, document-grounded answers.")
-
-with hero_right:
-    # Metrics grid using native st.metric()
-    metric_col1, metric_col2 = st.columns(2)
-    
-    with metric_col1:
-        st.metric(
-            label="⚡ Research Speed",
-            value="Faster",
-            delta="vs. manual reading",
-            help="From first question to key insights"
-        )
-        st.metric(
-            label="📊 Section Coverage",
-            value="Core SEC Items",
-            help="Risk Factors, Business, MD&A & more"
-        )
-    
-    with metric_col2:
-        st.metric(
-            label="🔍 Traceability",
-            value="100%",
-            delta="Citations included",
-            help="Every response cites filing sections"
-        )
-        st.metric(
-            label="📄 Filings",
-            value="10-K",
-            delta="10-Q & 8-K coming",
-            help="Annual reports currently supported"
+    with col_left:
+        st.markdown(
+            """
+            Finsights turns raw 10-K filings into a question and answer surface for your research.
+            Ask questions, surface KPIs, and trace every answer back to the underlying text in seconds.
+            """
         )
 
-st.markdown("---")
+        if st.button("Try the 10-K chatbot →", type="primary", use_container_width=False):
+            st.session_state.page = "Chatbot"
+            st.rerun()
 
-# ============================================================================
-# FEATURES SECTION
-# ============================================================================
+        st.caption("No trading advice, just transparent, document-grounded answers.")
 
-st.markdown("## What FinSight Unlocks")
-st.markdown("""
-A clean, question-and-answer layer on top of SEC filings — built for analysts, 
-PMs, and research teams who rely on 10-K disclosures.
-""")
+    with col_right:
+        metric_col1, metric_col2 = st.columns(2)
 
-# Feature cards in 3-column grid
-features = [
-    {
-        "title": "🔍 Context-Aware Filing Q&A",
-        "description": "Ask questions in plain language and get answers grounded in 10-K text, not generic model memory."
-    },
-    {
-        "title": "📑 Section-Level Insights",
-        "description": "Quickly access Risk Factors, Business Overview, and MD&A, all parsed into clean sections."
-    },
-    {
-        "title": "📊 Risk & Narrative Summarization",
-        "description": "Generate concise summaries of dense sections, tied back to their source paragraphs."
-    },
-    {
-        "title": "✅ Citation-First Answers",
-        "description": "Every response includes filing-level references so you know where information came from."
-    },
-    {
-        "title": "🏢 Multi-Company Support",
-        "description": "Ask about any supported filing — Apple 2023, Google 2020, Microsoft 2022."
-    },
-    {
-        "title": "⚖️ Compliance-Aware Design",
-        "description": "Clear document references supporting internal review and transparent research."
-    }
-]
+        with metric_col1:
+            st.markdown(
+                '<i class="fa-solid fa-bolt feature-icon"></i>',
+                unsafe_allow_html=True,
+            )
+            st.metric(
+                label="TIME TO INSIGHT",
+                value="Seconds",
+                help="From first question to key insights",
+            )
 
-# Display features in rows of 3
-for i in range(0, len(features), 3):
-    cols = st.columns(3)
-    for j, col in enumerate(cols):
-        if i + j < len(features):
-            feature = features[i + j]
-            with col:
-                with st.container(border=True):
-                    st.markdown(f"### {feature['title']}")
-                    st.markdown(feature['description'])
+            st.markdown(
+                '<i class="fa-solid fa-check-double feature-icon"></i>',
+                unsafe_allow_html=True,
+            )
+            st.metric(
+                label="WORKFLOW VALUE",
+                value="Audit-ready",
+                help="Every response cites filing sections",
+            )
 
-st.markdown("---")
+        with metric_col2:
+            st.markdown(
+                '<i class="fa-solid fa-layer-group feature-icon"></i>',
+                unsafe_allow_html=True,
+            )
+            st.metric(
+                label="FILINGS COVERED",
+                value="Core 10-K",
+                help="Risk Factors, Business Overview, MD&A? All sections covered!",
+            )
 
-# ============================================================================
-# EXAMPLE QUESTIONS
-# ============================================================================
+            st.markdown(
+                '<i class="fa-solid fa-file-contract feature-icon"></i>',
+                unsafe_allow_html=True,
+            )
+            st.metric(
+                label="ANSWER STYLE",
+                value="Grounded",
+                help="Answers and Exports have citations/references",
+            )
 
-st.markdown("## 💡 Example Questions")
+    st.divider()
 
-example_cols = st.columns(2)
 
-with example_cols[0]:
-    st.markdown("**Quick Queries:**")
-    st.markdown("""
-    - "What is Google's Revenue for 2023?"
-    - "What strategic priorities did Amazon outline for 2023?"
-    - "Show me Apple's gross margins for 2020-2023"
-    """)
+    # ========================================================================
+    # FEATURES SECTION (icons INSIDE the cards, flex layout)
+    # ========================================================================
 
-with example_cols[1]:
-    st.markdown("**Complex Analysis:**")
-    st.markdown("""
-    - "What drove Apple's revenue and margin changes in 2023?"
-    - "How did Microsoft's Cloud segment perform vs. last year?"
-    - "Compare Netflix and Disney's subscription risks in 2022"
-    """)
+    st.subheader("What Finsights unlocks")
+    st.write(
+        "A clean, question-and-answer layer on top of SEC filings — "
+        "built for analysts, PMs, and research teams."
+    )
 
-st.markdown("---")
+    # Pure HTML: one wrapper + six cards, no Streamlit containers/columns
+    st.markdown(
+        """
+        <div class="feature-grid">
 
-# ============================================================================
-# DATASET INFO
-# ============================================================================
+          <div class="feature-card">
+            <div class="feature-card-header">
+              <h4>Context-aware Q&amp;A</h4>
+              <i class="fa-solid fa-magnifying-glass feature-icon-inline"></i>
+            </div>
+            <p>
+              Ask questions in plain language and get answers grounded in 10-K text,
+              not generic model memory.
+            </p>
+          </div>
 
-with st.expander("📂 Dataset Coverage", expanded=False):
-    info_col1, info_col2 = st.columns(2)
-    
-    with info_col1:
-        st.markdown("**Current Coverage:**")
-        st.markdown("""
-        - Companies: 21 companies
-        - Years: 2015-2020
-        - Document Types: 10-K annual filings
-        - Sentences: 469K+ indexed
-        """)
-    
-    with info_col2:
-        st.markdown("**Coming Soon:**")
-        st.markdown("""
-        - Expanded company coverage (S&P 500)
-        - Extended timeline (2006-2024)
-        - 10-Q quarterly reports
-        - 8-K current reports
-        """)
+          <div class="feature-card">
+            <div class="feature-card-header">
+              <h4>Section-level insights</h4>
+              <i class="fa-solid fa-file-lines feature-icon-inline"></i>
+            </div>
+            <p>
+              Access Risk Factors, Business Overview, and MD&amp;A, all parsed into
+              clean sections.
+            </p>
+          </div>
 
-# ============================================================================
-# FOOTER
-# ============================================================================
+          <div class="feature-card">
+            <div class="feature-card-header">
+              <h4>Risk summarization</h4>
+              <i class="fa-solid fa-list-check feature-icon-inline"></i>
+            </div>
+            <p>
+              Generate concise summaries of dense sections tied back to source
+              paragraphs.
+            </p>
+          </div>
 
-st.markdown("---")
-footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
+          <div class="feature-card">
+            <div class="feature-card-header">
+              <h4>Citation-first answers</h4>
+              <i class="fa-solid fa-quote-left feature-icon-inline"></i>
+            </div>
+            <p>
+              Every response includes filing-level references so you know exactly
+              where information came from.
+            </p>
+          </div>
 
-with footer_col2:
+          <div class="feature-card">
+            <div class="feature-card-header">
+              <h4>Multi-company support</h4>
+              <i class="fa-solid fa-building feature-icon-inline"></i>
+            </div>
+            <p>
+              Ask about any supported filing — Apple 2023, Google 2020,
+              Microsoft 2022.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card-header">
+              <h4>Compliance-aware</h4>
+              <i class="fa-solid fa-shield-halved feature-icon-inline"></i>
+            </div>
+            <p>
+              Clear document references support internal review
+              and transparent research.
+            </p>
+          </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # =======================================================================
+    # EXAMPLE QUESTIONS (keep as Streamlit containers; they use default look)
+    # =======================================================================
+
+    st.subheader("Example questions")
+
+    col_q1, col_q2 = st.columns(2, gap="large")
+
+    with col_q1:
+        st.markdown("**Quick Queries:**")
+        with st.container(border=True):
+            st.markdown(
+                """
+                - "What is Google's Revenue for 2023?"
+                - "What strategic priorities did Amazon outline?"
+                - "Show me Apple's gross margins for 2020-2023"
+                """
+            )
+
+    with col_q2:
+        st.markdown("**Complex Analysis:**")
+        with st.container(border=True):
+            st.markdown(
+                """
+                - "What drove Apple's revenue and margin changes in 2023?"
+                - "How did Microsoft's Cloud segment perform vs. last year?"
+                - "Compare Netflix and Disney's subscription risks in 2022"
+                """
+            )
+
+    st.divider()
+
     st.caption("FinSight v1.0 | IE7374 MLOps Capstone Project")
     st.caption("Built with Streamlit + FastAPI + AWS Bedrock")

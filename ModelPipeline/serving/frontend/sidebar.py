@@ -1,17 +1,12 @@
-# frontend/sidebar.py
 """
-Shared sidebar component for FinSight.
+Enhanced sidebar for FinSight Chatbot.
 
-Renders consistent sidebar across all pages:
-- System health check
-- Statistics (queries, cost)
-- About section
-- Example questions
-- Clear chat button
-
-Usage:
-    from sidebar import render_sidebar
-    render_sidebar(client)
+Sections (in order):
+1. System Status
+2. Statistics
+3. Best Results Tips
+4. Example Queries
+5. Clear Chat
 """
 
 import streamlit as st
@@ -27,113 +22,104 @@ def render_sidebar(client: FinSightClient) -> None:
     Args:
         client: FinSightClient instance for health checks
     """
-    print("🔍 DEBUG: render_sidebar() called!")
-
+    
     with st.sidebar:
-        st.write("🔍 DEBUG: Inside st.sidebar block")
+        # Logo
+        st.markdown("""
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; 
+                        background: linear-gradient(135deg, #22c55e, #0ea5e9);"></div>
+            <div style="font-size: 1.2rem; font-weight: 700; color: #e2e8f0;">
+                Fin<span style="color: #22c55e;">sights</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.title("💹 FinSight")
-        st.markdown("**Financial Document Intelligence**")
-        st.markdown("---")
+        st.divider()
         
         # ====================================================================
-        # SYSTEM STATUS
+        # 1. SYSTEM STATUS
         # ====================================================================
-        st.markdown("### 🔧 System Status")
+        st.markdown("### System Status")
         
-        if st.button("🔄 Check Backend", use_container_width=True):
-            with st.spinner("Checking backend..."):
+        if st.button("Check Backend", use_container_width=True, type="secondary"):
+            with st.spinner("Checking..."):
                 health = client.health_check()
                 
-                if health.get("status") == "healthy":
-                    set_backend_health(True)
-                    st.success("✅ Backend: Healthy")
-                else:
-                    set_backend_health(False)
-                    st.error(f"❌ Backend: {health.get('error', 'Offline')}")
+                # if health.get("status") == "healthy":
+                #     set_backend_health(True)
+                #     st.success("Backend Online")
+                # else:
+                #     set_backend_health(False)
+                #     st.error(f"Backend Offline: {health.get('error', 'Unknown')}")
         
         # Display current status
         backend_healthy = st.session_state.get("backend_healthy")
         if backend_healthy is True:
-            st.success("✅ Backend: Online")
+            st.success("✓ Backend Online")
         elif backend_healthy is False:
-            st.error("❌ Backend: Offline")
+            st.error(f"✗ Backend Offline: {health.get('error', 'Unknown')}")
         else:
-            st.info("⚠️ Status: Unknown")
+            st.info("⚬ Status Unknown")
         
-        st.markdown("---")
+        st.divider()
         
         # ====================================================================
-        # STATISTICS
+        # 2. STATISTICS
         # ====================================================================
         display_sidebar_stats()
         
-        st.markdown("---")
+        st.divider()
         
         # ====================================================================
-        # CLEAR CHAT BUTTON
+        # 3. BEST RESULTS TIPS
         # ====================================================================
-        if st.button("🗑️ Clear Chat History", use_container_width=True):
+        st.markdown("### Best Results")
+        
+        st.markdown("""
+        **Query Guidelines:**
+        - Mention the company name
+        - Specify the filing year
+        - Ask about specific metrics or trends
+        - Phrase questions clearly
+        
+        **System Behavior:**
+        - Typical response: 10-15 seconds
+        - Cost per query: ~$0.01-0.02
+        - Answers cite source sections
+        """)
+        
+        st.divider()
+        
+        # ====================================================================
+        # 4. EXAMPLE QUERIES
+        # ====================================================================
+        st.markdown("### Example Queries")
+        
+        with st.expander("KPI Queries", expanded=False):
+            st.markdown("""
+            - "Show me Apple, Microsoft, Amazon, Alphabet, Google, and Tesla's financial performance from 2018 to 2022. I need their total sales, bottom line profits, operating cash flows, gross margins, total debt levels, shareholder equity, cost of goods sold, tax expenses, return on assets, and earnings per share."
+            """)
+        
+
+        with st.expander("Complex Analysis", expanded=False):
+            st.markdown("""
+            - "Across its fiscal 2017-2020 10-K filings, how does Walmart Inc. explain the main drivers behind changes in its long-term debt and related cash flows from financing activities?"
+            - "How does Tesla, Apple and MICROSOFT CORP describe the change in their cloud or AI revenues in 2017, including both the direction and magnitude of the change?"
+            - "Talk to me about Exxon Mobil's risk data and business overview in 2022"
+            - "How do Radian Group, Netflix and Mastercard each describe their exposure to data protection, information security and customer privacy risks?"
+            """)
+        
+        st.divider()
+        
+        # ====================================================================
+        # 5. CLEAR CHAT
+        # ====================================================================
+        if st.button("Clear Chat History", use_container_width=True, type="secondary"):
             clear_chat_history()
             st.rerun()
         
-        st.markdown("---")
+        st.divider()
         
-        # ====================================================================
-        # ABOUT SECTION
-        # ====================================================================
-        with st.expander("ℹ️ About", expanded=False):
-            st.markdown("""
-            **FinSight** - Financial Document Intelligence System
-            
-            Analyzes SEC 10-K filings using hybrid retrieval architecture.
-            
-            **Core Capabilities:**
-            - **Data**: SEC Edgar 10-K filings (sentence-level)
-            - **RAG Search**: Semantic retrieval via AWS S3 Vectors
-            - **Entity/Metadata/KPI**: Financial metrics from EdgarTools
-            - **LLM Synthesis**: Powered by Claude (AWS Bedrock)
-            - **Embeddings**: Cohere v4
-            - **Storage**: Parquet-based (99% cost savings vs. managed DBs)
-            - **Query Cost**: ~$0.01 per query
-            
-            **Dataset Coverage:**
-            - Companies: 21 companies (2015-2020)
-            - Document Types: 10-K annual filings
-            - Sentences: 469K+ indexed
-            
-            **Project:** IE7374 MLOps Capstone | Northeastern University
-            """)
-        
-        st.markdown("---")
-        
-        # ====================================================================
-        # EXAMPLE QUESTIONS
-        # ====================================================================
-        with st.expander("💡 Example Questions", expanded=False):
-            st.markdown("""
-            **Complex Analysis:**
-            
-            *"Across its fiscal 2018-2020 10-K filings, how does Walmart Inc. explain the main drivers behind changes in its long-term debt and related cash flows from financing activities?"*
-            
-            *"In their 2020 Form 10-K risk-factor disclosures, how do Radian Group, Netflix and Mastercard each describe their exposure to data protection, information security and customer privacy risks?"*
-            
-            **Comparative Metrics:**
-            
-            *"How does MICROSOFT CORP describe the change in its Intelligent Cloud revenue in 2017, including both the direction and magnitude of the change?"*
-            
-            *"Show me Apple, Microsoft, Amazon, Alphabet, Google, and Tesla's financial performance from 2018 to 2022. I need their total sales, bottom line profits, operating cash flows, gross margins, total debt levels, shareholder equity, cost of goods sold, tax expenses, return on assets, and earnings per share."*
-            
-            **Quick Queries:**
-            
-            *"What is Google's Revenue for 2023?"*
-            
-            *"What strategic priorities did Amazon outline for 2023?"*
-            
-            *"Show me Apple's gross margins for 2020-2023"*
-            
-            **Guidelines:**
-            - 10-500 characters
-            - Takes 10-15 seconds
-            - Cost: ~$0.017/query
-            """)
+        # Disclaimer
+        st.caption("**Disclaimer:** FinSight is a current student-prototype idea, a research tool, product showcase. It is not an investment advice tool. Always verify information independently.")

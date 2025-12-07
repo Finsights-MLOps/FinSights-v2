@@ -190,15 +190,15 @@ async def query_endpoint(request: QueryRequest):
     logger.info(f"📥 Received query: {request.question[:50]}...")
     
     try:
-        # Pass ModelPipeline root to orchestrator (correct!)
+        # Pass ModelPipeline root to orchestrator (!)
         result = answer_query(
             query=request.question,
-            model_root=MODEL_PIPELINE_ROOT,  # ← Now correct
+            model_root=MODEL_PIPELINE_ROOT,  
             include_kpi=request.include_kpi,
             include_rag=request.include_rag,
             model_key=request.model_key,
-            export_context=False,
-            export_response=False
+            export_context=config.export_context,
+            export_response=config.export_response
         )
         
         # Check if orchestrator returned an error

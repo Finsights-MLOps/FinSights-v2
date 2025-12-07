@@ -54,7 +54,7 @@ def answer_query(
     include_rag: bool = True,
     model_key: Optional[str] = None,
     export_context: bool = True,
-    export_response: bool = False
+    export_response: bool = True
 ) -> Dict:
     """
     End-to-end query answering using FinRAG pipeline.
@@ -427,6 +427,7 @@ def answer_query_batch(
         ...     print(f"Cost: ${r['metadata']['llm']['cost']:.4f}")
     """
     logger.info(f"Batch processing {len(queries)} queries")
+    print(f"Temporary: [Debug]: Export parameters are {export_contexts=}, {export_responses=}")
     
     results = []
     for i, q in enumerate(queries, 1):

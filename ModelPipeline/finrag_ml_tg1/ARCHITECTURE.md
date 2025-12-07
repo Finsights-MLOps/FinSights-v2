@@ -25,6 +25,11 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
 
 📦 finrag_ml_tg2/                               # [Secondary project workspace or experimental branch]
 
+📦 serving/                               		# serving - backend FastAPI + pydantic, streamlit etc.
+ ┣ 📂 frontend/                                # Frontend Streamlit application for user interaction
+ ┣ 📂 backend/                                 # Backend FastAPI service for model inference and API endpoints
+
+
 📜 .dvcignore                                   # DVC ignore patterns for data version control
 📜 .gitignore                                   # Git ignore patterns for version control
 ```
@@ -32,16 +37,23 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
 ### Embedding-Infra and Spines Overview:
 
 ```
+
 📦 platform_core_notebooks/
  ┣ 📜 01_Stage2_EmbeddingGen.ipynb              # Stage 2 meta table creation + embedding generation pipeline
  ┣ 📜 02_EmbeddingAnalytics.ipynb               # Vector-metadata parity, staleness checks, integration audits
  ┣ 📜 03_S3Vector_TableProvisioning.ipynb       # S3 Vector store schema setup and initialization
  ┣ 📜 04_S3Vector_BulkIngestion.ipynb           # Mass vector insertion pipeline (200K+ vectors)
+	
+	# these are 'dormant', infra_setup_notebooks which are performed in low frequency, expected: twice a year.
+
+ 📦 validation_notebooks/
  ┣ 📜 05_GoldP1P2_TestSuite.ipynb               # Validation framework, anchor design, Gold P1/P2 methodology
  ┣ 📜 06_GoldP3_HeuristicEng_Curation.ipynb     # Query taxonomy, warehouse design, NLP-heuristic curation for Gold P3
  ┣ 📜 07_S3_CostProjections.ipynb               # Query cost modeling and operational expense analysis
  ┣ 📜 08_RAGArch_DesignNotes.ipynb              # RAG architecture decisions, technical rationale, design patterns
  ┣ 📜 09_RAG_Comp_ITests_01.ipynb               # Component-level tests for entity adapter and early integration
+	
+	# can be deal with as 'iterative development artifacts', for dev tests.
 ```
 
 ### RAG Modules Source Code Overview:

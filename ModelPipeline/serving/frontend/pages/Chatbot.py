@@ -1,4 +1,4 @@
-# frontend/pages/2_Chatbot.py
+# frontend/pages/chatbot.py
 """
 FinSight Chatbot Page - RAG query interface with full sidebar.
 
@@ -65,7 +65,7 @@ render_sidebar(client)
 
 # Header
 st.title("💬 FinSight Assistant")
-st.markdown("Ask questions about SEC 10-K financial filings")
+st.markdown("Ask questions. Expand sidebar (to left) for examples, status, live-costs and more.")
 
 # Best practices banner
 with st.expander("💡 Best Results", expanded=True):

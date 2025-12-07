@@ -3,16 +3,19 @@
 FinSight - Financial Document Intelligence System
 
 ---------------------------------------------------------------------------
-
 cd ModelPipeline
-.\serving\frontend\venv_frontend\Scripts\Activate.ps1
-cd """
+.\\serving\\frontend\\venv_frontend\\Scripts\\Activate.ps1
+streamlit run .\\serving\\frontend\\app.py
+---------------------------------------------------------------------------
+"""
 
 import streamlit as st
 from api_client import FinSightClient
 from state import init_session_state
-from sidebar import render_sidebar
 from config import BACKEND_URL, API_TIMEOUT
+
+# Import styling
+from components.styles import inject_global_css
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -22,23 +25,24 @@ st.set_page_config(
     page_title="FinSight Intelligence",
     page_icon="💹",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Hidden for home, shown for chatbot
 )
+
+# ============================================================================
+# INJECT GLOBAL CSS
+# ============================================================================
+
+inject_global_css()
 
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
 
-# """
-# Single source of truth: Only api_client.py knows about URLs
-# Thought p deep about this one, what to do.
-# local + cloud without app.py changes, should work. Env awareness solid goes to whom? it goes to- api_client.py
-# app.py: doesn't need to understand deployment environments
-# """
-
-
-# Initialize session state
 init_session_state()
+
+# Initialize page navigation
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
 
 @st.cache_resource
 def get_api_client():
@@ -48,56 +52,62 @@ def get_api_client():
 client = get_api_client()
 
 # ============================================================================
-# SIDEBAR (SHARED ACROSS ALL PAGES)
+# NAVIGATION BAR
 # ============================================================================
 
-render_sidebar(client)
+col_left, col_right = st.columns([1, 1])
+
+with col_left:
+    # Logo
+    st.markdown("""
+    <div class="nav-logo">
+        <div class="logo-dot"></div>
+        <div class="logo-text">Fin<span class="highlight">sights</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_right:
+    # Navigation buttons
+    nav_col1, nav_col2 = st.columns(2)
+    
+    with nav_col1:
+        if st.button("Home", key="nav_home", use_container_width=True):
+            st.session_state.page = "Home"
+            st.rerun()
+    
+    with nav_col2:
+        if st.button("Chatbot", key="nav_chat", type="primary", use_container_width=True):
+            st.session_state.page = "Chatbot"
+            st.rerun()
+
+st.divider()
 
 # ============================================================================
-# WELCOME PAGE
+# PAGE ROUTING
 # ============================================================================
 
-st.title("💹 FinSight")
-st.markdown("### Financial Document Intelligence System")
-st.markdown("---")
+if st.session_state.page == "Home":
+    from pages.home import render_home
+    render_home()
 
-st.info("👈 **Use the sidebar to navigate between pages**")
-
-st.markdown("""
-**Available Pages:**
-- **Home**: Product overview, features, and examples
-- **Chatbot**: Ask questions about SEC 10-K filings
-
-**Quick Start:**
-1. Check backend status in the sidebar (click "🔄 Check Backend")
-2. Use sidebar navigation to go to the **Chatbot** page
-3. Ask questions about financial filings
-
-**Example:** *"What was Apple's revenue in 2020?"*
-""")
-
-st.markdown("---")
-
-# Quick stats preview
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        label="📊 Dataset",
-        value="21 Companies",
-        help="2015-2020 SEC 10-K filings"
-    )
-
-with col2:
-    st.metric(
-        label="💰 Query Cost",
-        value="~$0.01",
-        help="Average cost per query"
-    )
-
-with col3:
-    st.metric(
-        label="⚡ Response Time",
-        value="10-15s",
-        help="Average processing time"
-    )
+elif st.session_state.page == "Chatbot":
+    from chat import render_chat_history, handle_user_input
+    from sidebar import render_sidebar
+    
+    # Render enhanced sidebar
+    render_sidebar(client)
+    
+    # Clean main chat interface
+    st.title("FinSight Assistant")
+    st.markdown("Ask questions about SEC 10-K financial filings")
+    
+    st.divider()
+    
+    # Chat area (clean, no extra UI elements)
+    render_chat_history()
+    handle_user_input(client)
+    
+    # Footer below input bar
+    st.divider()
+    st.caption("FinSight v1.0 | IE7374 MLOps Capstone Project")
+    st.caption("Built with Streamlit + FastAPI + AWS Bedrock")

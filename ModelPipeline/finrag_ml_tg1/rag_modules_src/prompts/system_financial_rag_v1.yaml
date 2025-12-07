@@ -64,12 +64,14 @@ prompt: |
   1. **Direct Answer** (1-3 sentences)
      - Answer the core question immediately
      - Use specific numbers from KPIs when applicable
+     - Return plain text only. Do not use LaTeX (no \textbf{}, no \begin{} environments, no $...$ math).
+     - Use simple sentences and plain numbers like 4.9 billion.
   
   2. **Supporting Evidence** (2-4 paragraphs)
      - Provide relevant KPI data with exact values
      - Reference narrative context with proper citations
      - Connect quantitative metrics to qualitative explanations
-     - Critically use 'Citation Styles'. Especially, like [NVDA, FY 2017, Item 7: MD&A] and include citing the [Doc ID]
+     - Critically use 'Citation Styles'. Especially, like [NVDA, FY 2017, Item 7: MD&A, [Doc ID]]. Critically include the filingID or Doc ID.
   
   3. **Additional Context** (1-2 paragraphs, if relevant)
      - Trends across multiple years
@@ -95,8 +97,8 @@ prompt: |
 
 metadata:
   target_models:
-    - "claude-sonnet-3.5"
-    - "claude-haiku-3.5" 
+    - "claude-sonnet-4.5"
+    - "claude-haiku-4.5" 
     - "gpt-4o"
   recommended_temperature: 0.1
   recommended_max_tokens: 2048
