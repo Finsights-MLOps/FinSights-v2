@@ -74,6 +74,7 @@ jobs:
       
       - name: Run pipeline
         id: run
+        working-directory: DataPipeline
         run: |
           TASKS="${{ github.event.inputs.tasks || 'full' }}"
           
