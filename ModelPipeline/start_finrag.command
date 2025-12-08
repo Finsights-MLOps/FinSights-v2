@@ -1,4 +1,3 @@
-
 #!/bin/bash
 # start_finrag.command
 # FinRAG Startup Script for Mac/Linux
@@ -6,10 +5,21 @@
 
 # ==============================================================================
 # CONFIGURATION
+# 1. Config Script Directory, Backend and Frontend Environments, Serving Directory.
+# 2. Define Ports for Backend and Frontend.
+# 3. Start servers in separate terminal windows.
 # ==============================================================================
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BACKEND_ENV="$SCRIPT_DIR/finrag_ml_tg1/venv_ml_rag/bin/activate"
+
+# Use serving environment by default - This is minimal, clean, no bulk research packs.
+BACKEND_ENV="$SCRIPT_DIR/finrag_ml_tg1/venv_serving/bin/activate"
+# Fallback to full environment if serving doesn't exist
+if [ ! -f "$BACKEND_ENV" ]; then
+    echo -e "${YELLOW}[INFO] Serving environment not found, using full ML environment${NC}"
+    BACKEND_ENV="$SCRIPT_DIR/finrag_ml_tg1/venv_ml_rag/bin/activate"
+fi
+
 FRONTEND_ENV="$SCRIPT_DIR/serving/frontend/venv_frontend/bin/activate"
 SERVING_DIR="$SCRIPT_DIR/serving"
 
@@ -77,7 +87,7 @@ echo ""
 
 echo -e "${YELLOW}[*] Checking if ports are available...${NC}"
 
-# Check backend port (Mac/Linux)
+# Check backend port
 if lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
     echo -e "${YELLOW}[WARNING] Port $BACKEND_PORT is already in use!${NC}"
     echo -e "${YELLOW}   Backend may already be running or port is occupied.${NC}"
@@ -119,9 +129,9 @@ echo -e "${YELLOW}   URL:  http://localhost:$BACKEND_PORT${NC}"
 echo -e "${YELLOW}   Docs: http://localhost:$BACKEND_PORT/docs${NC}"
 echo ""
 
-# Start backend in new terminal (Mac)
+# Start backend in new terminal
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS - FIXED: Removed color codes from osascript
+    # macOS
     osascript -e "tell application \"Terminal\" to do script \"cd '$SERVING_DIR' && source '$BACKEND_ENV' && echo 'Backend environment activated' && echo 'Starting uvicorn server...' && echo '' && uvicorn backend.api_service:app --reload --host 0.0.0.0 --port $BACKEND_PORT\""
 else
     # Linux (using gnome-terminal, xterm, or konsole)
@@ -152,10 +162,9 @@ echo -e "${YELLOW}   Port: $FRONTEND_PORT${NC}"
 echo -e "${YELLOW}   URL:  http://localhost:$FRONTEND_PORT${NC}"
 echo ""
 
-# Start frontend in new terminal
-# NOTE: Removed --server.headless false to prevent double browser open
+# Start frontend in new terminal (with auto-open browser flag)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS - FIXED: Removed color codes from osascript
+    # macOS
     osascript -e "tell application \"Terminal\" to do script \"cd '$SERVING_DIR' && source '$FRONTEND_ENV' && echo 'Frontend environment activated' && echo 'Starting Streamlit server...' && echo 'Browser will open automatically...' && echo '' && streamlit run frontend/app.py --server.port $FRONTEND_PORT --server.address localhost\""
 else
     # Linux
@@ -165,6 +174,9 @@ else
         xterm -e "cd '$SERVING_DIR' && source '$FRONTEND_ENV' && echo 'Frontend environment activated' && echo 'Starting Streamlit server...' && echo 'Browser will open automatically...' && echo '' && streamlit run frontend/app.py --server.port $FRONTEND_PORT --server.address localhost; bash" &
     fi
 fi
+
+## ============= ===================== Was causing double browser open issue =====================
+## streamlit run frontend/app.py --server.port $FRONTEND_PORT --server.address localhost --server.headless false
 
 echo -e "${YELLOW}[*] Frontend starting... (waiting 6 seconds)${NC}"
 sleep 6
@@ -177,7 +189,7 @@ echo ""
 echo -e "${CYAN}[*] Opening browser...${NC}"
 sleep 2
 
-# Open browser based on OS (backup in case Streamlit didn't auto-open)
+# Open browser (backup in case Streamlit didn't auto-open)
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
     open "http://localhost:$FRONTEND_PORT" 2>/dev/null || true
