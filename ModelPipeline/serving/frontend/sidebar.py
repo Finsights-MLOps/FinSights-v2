@@ -1,3 +1,4 @@
+# ModelPipeline/serving/frontend/sidebar.py
 """
 Enhanced sidebar for FinSight Chatbot.
 

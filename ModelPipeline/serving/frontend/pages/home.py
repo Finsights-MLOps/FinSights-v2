@@ -1,6 +1,6 @@
+# ModelPipeline\serving\frontend\pages\home.py
 """
 FinSights Home Page - Polished UI with Streamlit Components.
-
 """
 
 import streamlit as st
@@ -16,8 +16,8 @@ def render_home():
     st.markdown(
         """
         <div class="hero-headline">
-            Markets shouldn't overwhelm you. Toss dense filings—
-            <span class="gradient-text">Find Clarity. Find Interpretations. Power your Financial Research</span>
+            10-Ks shouldn't be barriers. Cut through complexity—
+            <span class="gradient-text">Find Clarity. Find Interpretations. Power your Financial Research.</span>
         </div>
         """,
         unsafe_allow_html=True,

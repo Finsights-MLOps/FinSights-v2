@@ -1,4 +1,5 @@
-# frontend/app.py
+# ModelPipeline\serving\frontend\app.py
+
 """
 FinSight - Financial Document Intelligence System
 

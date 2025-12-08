@@ -1,5 +1,5 @@
+# ModelPipeline\serving\frontend\components\styles.py
 import streamlit as st
-
 
 def inject_global_css():
     """Inject global CSS for FinSight / FinSights UI."""

@@ -1,5 +1,5 @@
+# ModelPipeline\serving\frontend\chat.py
 """
-
 RESPONSIBILITIES:
 ✓ Render chat message bubbles (user + assistant)
 ✓ Display loading spinner during query processing
@@ -60,7 +60,9 @@ def render_chat_message(message: Dict[str, Any]) -> None:
         else:
             # CHANGED: Use st.write instead of st.markdown to avoid LaTeX parsing
             # st.write handles text more naturally and doesn't trigger LaTeX
-            st.write(content)
+            # st.write is still using regex. flaws. detects content and renders appropriately
+            st.markdown(content)
+
         
         # Display metadata for assistant messages (if exists and not error)
         if role == "assistant" and not message.get("error", False):

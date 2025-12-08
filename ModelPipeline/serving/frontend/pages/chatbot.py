@@ -2,7 +2,6 @@
 """
 FinSight Chatbot Page - RAG query interface with full sidebar. 
 
-
 Preserves ALL existing functionality from original app.py:
 - Sidebar: System status, statistics, about, examples (via render_sidebar)
 - Chat: Full message history with metadata

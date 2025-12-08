@@ -1,27 +1,34 @@
 ## FinRAG Docker Local Setup Guide
 
-1. Clone repo
+The flow: **Clone -> Set up AWS creds -> Navigate once -> Build + Start**
+
+**Clone repo**
 - git clone https://github.com/Finsights-MLOps/FinSights.git
 - cd FinSights/ModelPipeline
 
-2. Set up AWS credentials (ONLY ONCE)
+**Set up AWS credentials (once, after cloning the repo.)**
 - Location `# Path: finrag_ml_tg1/.aws_secrets/aws_credentials.env`
 - A template file is provided at `# Path: finrag_ml_tg1/.aws_secrets/example_aws_credentials.env`
 - Add your AWS keys
 
-3. Ensuring you're at the path where docker-compose.yml is located
+**Ensuring you're at the path where docker-compose.yml is located**
 - Ensure you're at 'FinSights/' path first. 
 - cd "ModelPipeline\finrag_docker_loc_tg1"
 
-4. [Optional] Checking commands (for devs):
+**[Optional] Checking commands (for devs):**
 - Check what Docker will send to build context (before building)
     - docker compose build --no-cache --progress=plain backend 2>&1 | Select-String "COPY"
     - docker compose build --no-cache --progress=plain backend
 
-5. Full Build + Start commands:
+**Full Build + Start commands:**
    - docker compose up --build
 
-6.  If necessary: Down, Removal.
+
+- This builds both backend and frontend images, then starts the containers. 
+
+---
+
+**If necessary: Down, Removal.**
 - To do basic, up and down:
   - docker compose down
   - docker compose restart  

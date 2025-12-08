@@ -1,4 +1,4 @@
-# serving/frontend/config.py
+# ModelPipeline\serving\frontend\config.py
 """
 Frontend configuration - Single source of truth for all settings.
 

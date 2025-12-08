@@ -1,5 +1,5 @@
+# ModelPipeline\serving\frontend\api_client.py
 """
-
 RESPONSIBILITIES:
 ✓ Make HTTP POST requests to backend (/query endpoint)
 ✓ Handle connection errors and timeouts
