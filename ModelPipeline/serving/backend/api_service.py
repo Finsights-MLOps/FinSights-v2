@@ -197,8 +197,8 @@ async def query_endpoint(request: QueryRequest):
             include_kpi=request.include_kpi,
             include_rag=request.include_rag,
             model_key=request.model_key,
-            export_context=config.export_context,
-            export_response=config.export_response
+            export_context=config.enable_exports,
+            export_response=config.enable_exports
         )
         
         # Check if orchestrator returned an error

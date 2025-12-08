@@ -36,34 +36,39 @@ def render_sidebar(client: FinSightClient) -> None:
         """, unsafe_allow_html=True)
         
         st.divider()
-        
+                
         # ====================================================================
         # 1. SYSTEM STATUS
         # ====================================================================
         st.markdown("### System Status")
-        
+
         if st.button("Check Backend", use_container_width=True, type="secondary"):
             with st.spinner("Checking..."):
                 health = client.health_check()
                 
-                # if health.get("status") == "healthy":
-                #     set_backend_health(True)
-                #     st.success("Backend Online")
-                # else:
-                #     set_backend_health(False)
-                #     st.error(f"Backend Offline: {health.get('error', 'Unknown')}")
-        
+                # Update state based on health check
+                if health.get("status") == "healthy":
+                    set_backend_health(True)
+                    st.session_state.backend_error = None
+                else:
+                    set_backend_health(False)
+                    st.session_state.backend_error = health.get("error", "Unknown error")
+                
+                # Force rerun to display updated status below
+                st.rerun()
+
         # Display current status
         backend_healthy = st.session_state.get("backend_healthy")
         if backend_healthy is True:
             st.success("✓ Backend Online")
         elif backend_healthy is False:
-            st.error(f"✗ Backend Offline: {health.get('error', 'Unknown')}")
+            error_msg = st.session_state.get("backend_error", "Unknown")
+            st.error(f"✗ Backend Offline: {error_msg}")
         else:
             st.info("⚬ Status Unknown")
-        
+
         st.divider()
-        
+                
         # ====================================================================
         # 2. STATISTICS
         # ====================================================================

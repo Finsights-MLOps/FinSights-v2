@@ -65,3 +65,132 @@ ModelPipeline/
 3. Workflow 1: "Just check if UV is installed"
 4. Workflow 2: "I broke my backend environment" - Just re-run `setup_finrag` script.
 5. Workflow 3: "Fresh start everything/ New PC setup" - Just re-run `setup_finrag` script! `:)` 
+
+---
+
+
+### Essence of setup work:
+
+**Backend (FastAPI)**
+- Code root: ModelPipeline/
+- Entrypoint: serving/backend/api_service:app
+- Command: uvicorn ... --host 0.0.0.0 --port 8000
+- Python deps for serving are in finrag_ml_tg1/environments/requirements_sevalla.txt
+- Needs AWS creds + LOG_LEVEL env vars.
+
+**Frontend (Streamlit)**
+- Code under serving/frontend/
+- Command: streamlit run serving/frontend/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+- Reads BACKEND_URL env var, defaulting to localhost in code.
+
+**PowerShell / .bat helpers:**
+- Pick the right venv (venv_serving, venv_frontend),
+- Install a curated requirements file,
+- Then run exactly those commands.
+
+**What Nixpacks is good at:**
+- Simple repos where it can see requirements.txt at the build path root and there’s a single obvious web process.
+- Not for FinSights: Monorepo (FinSights) with deep sub-dirs (ModelPipeline, serving/frontend) etc. Multiple services (backend + frontend). Custom requirements file locations.
+
+
+---
+
+---
+
+
+## Manual process for installing envs and running terminals:
+
+**Setup of 2 environments**
+```python
+# ============================================
+# ONE-TIME SETUP (WINDOWS)
+# ============================================
+
+## Backend Environment (Minimal):
+cd ModelPipeline\finrag_ml_tg1
+uv venv venv_backend
+.\venv_backend\Scripts\Activate.ps1
+uv pip install -r environments\requirements_app_backend.txt
+deactivate
+
+## Frontend Environment:
+cd ModelPipeline\serving\frontend
+uv venv venv_frontend
+.\venv_frontend\Scripts\Activate.ps1
+uv pip install -r requirements.txt
+deactivate
+
+
+# ============================================
+# RUN APPLICATION (Two Terminals)
+# ============================================
+
+## Terminal 1 - Backend:
+# Kill any process on port 8000
+Get-Process -Id (Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force
+
+cd ModelPipeline\finrag_ml_tg1
+.\venv_backend\Scripts\Activate.ps1
+cd ..\serving
+uvicorn backend.api_service:app --reload --host 0.0.0.0 --port 8000
+
+## Terminal 2 - Frontend:
+# Kill any process on port 8501 (Streamlit default)
+Get-Process -Id (Get-NetTCPConnection -LocalPort 8501 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force
+
+cd ModelPipeline\finrag_ml_tg1
+..\serving\frontend\venv_frontend\Scripts\Activate.ps1
+cd ..\serving
+streamlit run frontend\app.py
+```
+
+-------------------------------------------------------------------------------------------------
+
+**FOR MAC USERS** - same commands, just minimal syntax changes.
+
+```python
+# ============================================
+# ONE-TIME SETUP (MAC/LINUX)
+# ============================================
+
+## Backend Environment (Minimal):
+cd ModelPipeline/finrag_ml_tg1
+uv venv venv_backend
+source venv_backend/bin/activate
+uv pip install -r environments/requirements_app_backend.txt
+deactivate
+
+## Frontend Environment:
+cd ModelPipeline/serving/frontend
+uv venv venv_frontend
+source venv_frontend/bin/activate
+uv pip install -r requirements.txt
+deactivate
+
+
+# ============================================
+# RUN APPLICATION (Two Terminals)
+# ============================================
+
+## Terminal 1 - Backend:
+# Kill any process on port 8000
+lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+
+cd ModelPipeline/finrag_ml_tg1
+source venv_backend/bin/activate
+cd ../serving
+uvicorn backend.api_service:app --reload --host 0.0.0.0 --port 8000
+
+## Terminal 2 - Frontend:
+# Kill any process on port 8501 (Streamlit default)
+lsof -ti:8501 | xargs kill -9 2>/dev/null || true
+
+cd ModelPipeline/finrag_ml_tg1
+source ../serving/frontend/venv_frontend/bin/activate
+cd ../serving
+streamlit run frontend/app.py
+```
+
+
+
+

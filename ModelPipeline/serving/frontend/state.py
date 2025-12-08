@@ -187,3 +187,30 @@ def get_backend_health() -> Optional[bool]:
         bool or None: True if healthy, False if unhealthy, None if unknown
     """
     return st.session_state.backend_healthy
+
+
+
+def auto_check_backend_health(client, show_spinner: bool = False) -> None:
+    """
+    Automatically check backend health on first app load.
+    
+    Args:
+        client: FinSightClient instance
+        show_spinner: Whether to show loading spinner
+    """
+    if "backend_auto_checked" not in st.session_state:
+        if show_spinner:
+            with st.spinner("Checking backend connection..."):
+                health = client.health_check()
+        else:
+            health = client.health_check()
+        
+        if health.get("status") == "healthy":
+            st.session_state.backend_healthy = True
+        else:
+            st.session_state.backend_healthy = False
+            st.session_state.backend_error = health.get("error", "Unknown error")
+        
+        st.session_state.backend_auto_checked = True
+
+        

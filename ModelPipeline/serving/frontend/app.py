@@ -11,7 +11,7 @@ streamlit run .\\serving\\frontend\\app.py
 
 import streamlit as st
 from api_client import FinSightClient
-from state import init_session_state
+from state import init_session_state, auto_check_backend_health
 from config import BACKEND_URL, API_TIMEOUT
 
 # Import styling
@@ -50,6 +50,10 @@ def get_api_client():
     return FinSightClient(base_url=BACKEND_URL, timeout=API_TIMEOUT)
 
 client = get_api_client()
+
+# auto-check backend health on first load
+auto_check_backend_health(client)
+
 
 # ============================================================================
 # NAVIGATION BAR
