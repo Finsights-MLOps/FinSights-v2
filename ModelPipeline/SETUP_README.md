@@ -1,3 +1,8 @@
+## Update: Better setup process!
+- **Preferred Setup Method:** Please use this, a dockerized setup for proper compatibility.
+- [Dockerized Setup Guide](./finrag_docker_loc_tg1/LOC_DOCKER_README.md)
+- The below process is a suitable setup but it just uses quick start scripts which are based off either command files or PS1 shell files. It does achieve all the automation with a single click process but we still prefer using Docker here because it containerizes the application cleanly.
+
 ## Prerequisites
 - Python 3.12 installed
 - Git (to clone the repository)

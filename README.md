@@ -1,7 +1,18 @@
 # FinSights
 
-#### Course Project (MLOps IE7374) - FINRAG Insights.
-- Building an AI-powered financial analysis pipeline for structured KPI extraction and explainable reporting from 10-K filings SEC(Securities and Exchange Commission).
+#### Course Project (MLOps IE7374) - FinSights.
+
+<!-- - Building an AI-powered financial analysis pipeline for structured KPI extraction and explainable reporting from 10-K filings SEC(Securities and Exchange Commission). -->
+
+- FinSights is a production-grade financial document intelligence system. The system processes SEC 10-K filings to enable sophisticated question-answering capabilities for financial analysts and portfolio managers through a hybrid retrieval architecture.
+- **The Problem**: Financial analysts spend countless hours manually parsing dense SEC 10-K filings to extract key performance indicators and answer strategic questions. With thousands of companies filing annually, this manual process is time-consuming, error-prone, and doesn't scale.
+- **Our Solution**: FinSights combines structured KPI extraction with semantic retrieval-augmented generation (RAG) to provide, assembles multi-sourced data to deliver accurate, context-aware answers to complex financial queries. It promises cost-effectiveness, scalability, and true grounding for insights by citing actual filing IDs.
+- FinSights' goal is to make dense financial documents easily explainable and interpretable. 
+
+
+### Quick Redirect (Setup):
+- Setup Instructions: [Setup Instructions](ModelPipeline/README.md#L38) 
+- There are 2 setup options, preferred one being dockerized setup for local installation. [Quick Start with Docker! (RECOMMENDED)](ModelPipeline/finrag_docker_loc_tg1/LOC_DOCKER_README.md) and [Quick Start with Command/Ps1 Scripts](ModelPipeline/SETUP_README.md)
 
 
 ## High level Conceptual Flow:
@@ -60,10 +71,6 @@
 - Data Pipeline Documentation: https://github.com/Finsights-MLOps/FinSights/blob/main/DataPipeline/README.md
 
 
-### Quick Redirect (Setup):
-- Headover to Setup and Start point here: [Setup Instructions](ModelPipeline/SETUP_README.md)
-
-
 ## Project Overview:
 
 1. For background, and Business HLD (High-Level Design) please feel free to skim through [Scoping](design_docs/Project_Scoping_IE7374_FinSights.pdf) and [Design](design_docs/Finance_RAG_HLD_v1.xlsx)(excel). They explain the business problem, solution approach, and high-level architecture.  
@@ -88,7 +95,7 @@
 8. The `ModelPipeline/serving/` layer implements a three-tier service architecture separating concerns between presentation (Streamlit frontend), application (FastAPI backend), and business logic (ML orchestrator). Backend wraps the ML pipeline with RESTful HTTP endpoints while frontend provides a stateless chat interface.
     - Setup is automated via `setup_finrag` scripts with UV package manager for fast dependency resolution. One-click startup through `start_finrag` scripts launches both services with automatic browser opening. See [Setup Instructions](ModelPipeline/SETUP_README.md) for complete deployment guide.
 
-9. System achieves $0.01 per query cost efficiency through Parquet-based vector storage (99% savings vs managed databases), processes complex multi-company queries in 10-15 seconds, and maintains comprehensive logging and audit trails across all tiers for production-grade observability.
+9. System achieves $0.017 - $0.025 per query cost efficiency through Parquet-based vector storage (99% savings vs managed databases), processes complex multi-company queries, and maintains comprehensive logging and audit trails across all tiers for production-grade observability.
     - Architecture supports independent scaling of frontend and backend services, demonstrates MLOps best practices including dependency injection, contract-driven development with Pydantic validation, and separation of ML inference from HTTP serving logic.
 
 
