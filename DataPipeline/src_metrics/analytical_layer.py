@@ -767,7 +767,7 @@ def upload_results_to_s3(
     run_id = run_id or datetime.utcnow().strftime("%Y%m%dT%H%M%S")
 
     # Parquet destination
-    parquet_key = f"{base_prefix}/analytical_layer_metrics_final.parquet"
+    parquet_key = f"{base_prefix}/KPI_FACT_DATA_EDGAR.parquet"
 
     # JSON metadata destination
     json_key = (
@@ -938,12 +938,12 @@ def load_final_parquet_from_s3():
     bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
     base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
 
-    # Keep the same key as your earlier logs (analytical_layer_metrics_final.parquet)
-    parquet_key  = f"{base_prefix}/analytical_layer_metrics_final.parquet"
+    # Keep the same key as your earlier logs (KPI_FACT_DATA_EDGAR.parquet)
+    parquet_key  = f"{base_prefix}/KPI_FACT_DATA_EDGAR.parquet"
     project_root = Path(__file__).parent 
     
     # 2. Define File Names and Paths
-    local_filename = "analytical_layer_metrics_final.parquet"
+    local_filename = "KPI_FACT_DATA_EDGAR.parquet"
     # Create the full local path: project_root / local_filename
     local_path = project_root / local_filename
     
@@ -973,8 +973,8 @@ def upload_results_to_s3(
     bucket = os.getenv("FINRAG_S3_BUCKET", "sentence-data-ingestion")
     base_prefix = "DATA_MERGE_ASSETS/FINRAG_FACT_METRICS"
 
-    # Keep the same key as your earlier logs (analytical_layer_metrics_final.parquet)
-    parquet_key  = f"{base_prefix}/analytical_layer_metrics_final.parquet"
+    # Keep the same key as your earlier logs (KPI_FACT_DATA_EDGAR.parquet)
+    parquet_key  = f"{base_prefix}/KPI_FACT_DATA_EDGAR.parquet"
     metadata_key = f"{base_prefix}/run_metadata/{dag_id}/{task_id}/{run_id}.json"
     coverage_key = f"{base_prefix}/coverage_reports/{dag_id}/{task_id}/{run_id}.csv"
 
@@ -1165,7 +1165,7 @@ def run_analytical_layer_pipeline(
       4. If NEW has strictly better coverage → merge & overwrite final parquet
       5. Write:
          - analytical_layer_metrics_last2yrs.parquet
-         - analytical_layer_metrics_final.parquet
+         - KPI_FACT_DATA_EDGAR.parquet
          - analytical_layer_run_metadata.json
          - analytical_layer_coverage_last2yrs.csv
 
@@ -1186,7 +1186,7 @@ def run_analytical_layer_pipeline(
 
     # Paths under the given base_dir
     new_parquet_path   = os.path.join(base_dir, "analytical_layer_metrics_last2yrs.parquet")
-    final_parquet_path = os.path.join(base_dir, "analytical_layer_metrics_final.parquet")
+    final_parquet_path = os.path.join(base_dir, "KPI_FACT_DATA_EDGAR.parquet")
     coverage_csv_path  = os.path.join(base_dir, "analytical_layer_coverage_last2yrs.csv")
     metadata_json_path = os.path.join(base_dir, "analytical_layer_run_metadata.json")
 
