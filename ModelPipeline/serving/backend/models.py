@@ -39,7 +39,7 @@ class QueryRequest(BaseModel):
     question: str = Field(
         ...,
         min_length=10,
-        max_length=500,
+        max_length=3500,
         description="User's natural language question about 10-K filings",
         examples=["What was Microsoft's cloud revenue growth in 2023?"]
     )

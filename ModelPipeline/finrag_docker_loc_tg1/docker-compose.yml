@@ -1,0 +1,89 @@
+# ============================================================================
+# Docker Compose - Local Development Stack
+# Run from: ModelPipeline/finrag_docker_loc_tg1/
+# Command: docker compose up --build
+# ============================================================================
+# version: "3.9"
+
+services:
+  # ==========================================================================
+  # Backend Service - FastAPI + ML Orchestrator
+  # ==========================================================================
+  backend:
+    build:
+      context: ..  # Parent directory (ModelPipeline/)
+      dockerfile: finrag_docker_loc_tg1/backend.Dockerfile
+    container_name: finrag-backend
+    
+    # Load AWS credentials from existing .aws_secrets file
+    env_file:
+      - ../finrag_ml_tg1/.aws_secrets/aws_credentials.env
+    
+    # Additional environment variables (override secrets.env if needed)
+    environment:
+      # -- now managed via aws_credentials.env --
+      # - LOG_LEVEL=INFO
+      # - ENABLE_EXPORTS=true
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+    
+    ports:
+      - "8000:8000"  # Map host:container
+    
+    # Volumes commented out by default - uncomment if needed for debugging
+    # volumes:
+    #   - ../finrag_ml_tg1/data_store/logs:/app/finrag_ml_tg1/data_store/logs
+    #   - ../finrag_ml_tg1/rag_modules_src/exports:/app/finrag_ml_tg1/rag_modules_src/exports
+    
+    restart: unless-stopped
+    networks:
+      - finrag-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================================================
+  # Frontend Service - Streamlit UI
+  # ==========================================================================
+  frontend:
+    build:
+      context: ..  # Parent directory (ModelPipeline/)
+      dockerfile: finrag_docker_loc_tg1/frontend.Dockerfile
+    container_name: finrag-frontend
+    
+    environment:
+      # Backend connection - uses Docker's internal DNS
+      # "backend" resolves to the backend container's IP
+      - BACKEND_URL=http://backend:8000
+      
+      # Streamlit configuration
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    
+    ports:
+      - "8501:8501"  # Map host:container
+    
+    depends_on:
+      backend:
+        condition: service_healthy  # Wait for backend to be healthy
+    
+    restart: unless-stopped
+    networks:
+      - finrag-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# ============================================================================
+# Networks - This is the "bridge" for microservices communication
+# ============================================================================
+networks:
+  finrag-network:
+    driver: bridge
+    name: finrag-network

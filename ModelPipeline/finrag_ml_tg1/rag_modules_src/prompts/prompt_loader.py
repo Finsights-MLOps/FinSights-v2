@@ -13,6 +13,15 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 
+
+import yaml
+import logging
+from pathlib import Path
+from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+
 class PromptLoader:
     """
     Loads and formats prompt templates from YAML files.
@@ -49,24 +58,6 @@ class PromptLoader:
         └── prompt_loader.py                   # This file
     """
     
-    # ════════════════════════════════════════════════════════════════════════
-    # Path Resolution - Find ModelPipeline root
-    # ════════════════════════════════════════════════════════════════════════
-    
-    _current = Path.cwd()
-    _model_root = None
-    for _parent in [_current] + list(_current.parents):
-        if _parent.name == "ModelPipeline":
-            _model_root = _parent
-            break
-    
-    if _model_root is None:
-        raise RuntimeError("Cannot find 'ModelPipeline' root in path tree")
-    
-    # Prompts directory: rag_modules_src/prompts/
-    PROMPTS_DIR = _model_root / "finrag_ml_tg1" / "rag_modules_src" / "prompts"
-    
-    
     def __init__(
         self, 
         system_prompt_version: str = "v1", 
@@ -82,6 +73,14 @@ class PromptLoader:
         Raises:
             FileNotFoundError: If prompt files don't exist at expected paths
         """
+        # Use MLConfig service to get ModelPipeline root (centralized path detection)
+        from finrag_ml_tg1.loaders.ml_config_loader import MLConfig
+        config = MLConfig()
+        model_root = config.model_root
+
+        # Prompts directory: rag_modules_src/prompts/
+        self.PROMPTS_DIR = model_root / "finrag_ml_tg1" / "rag_modules_src" / "prompts"
+        
         # Build file paths
         self.system_prompt_file = self.PROMPTS_DIR / f"system_financial_rag_{system_prompt_version}.yaml"
         self.query_template_file = self.PROMPTS_DIR / f"query_template_standard_{query_template_version}.yaml"
@@ -109,7 +108,6 @@ class PromptLoader:
             self.query_config = yaml.safe_load(f)
         
         logger.info("PromptLoader initialized successfully")
-    
     
     # ════════════════════════════════════════════════════════════════════════
     # Core Methods

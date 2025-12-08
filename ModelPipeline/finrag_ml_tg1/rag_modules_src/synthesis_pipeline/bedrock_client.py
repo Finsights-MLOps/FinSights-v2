@@ -12,6 +12,7 @@ import boto3
 import json
 from typing import Dict
 import logging
+from ..utilities.response_cleaner import clean_llm_response
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,7 @@ class BedrockClient:
             f"region={region}, max_tokens={max_tokens}"
         )
     
+
     def invoke(self, system: str, user: str) -> Dict:
         """
         Invoke Claude model with system + user prompts.
@@ -122,6 +124,8 @@ class BedrockClient:
             >>> print(f"Cost: ${response['cost']:.4f}")
         """
         # Construct request body (Claude Messages API format)
+        # "bedrock-2023-05-31" is the ONLY version, and it's current. 
+        # 
         body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": self.max_tokens,
@@ -135,6 +139,12 @@ class BedrockClient:
             ]
         }
         
+        """ // bedrock-2023-05-31 = Messages API format specification, NOT model version
+        // AWS maintains backward compatibility - new models work with this format
+        Claude 4 Haiku 4.5 (us.anthropic.claude-haiku-4-5-20251001-v1:0) - MODEL
+        Claude 4 Sonnet 4.5 (us.anthropic.claude-sonnet-4-5-20250929-v1:0)
+        Claude 4 Opus 4.5 (global.anthropic.claude-opus-4-5-20251101-v1:0)
+        """
         try:
             # Call AWS Bedrock API
             response = self.client.invoke_model(
@@ -145,8 +155,15 @@ class BedrockClient:
             # Parse response body
             response_body = json.loads(response['body'].read())
             
+            ## updated: on 12/8. wew.
             # Extract response content
-            content = response_body['content'][0]['text']
+            raw_content = response_body['content'][0]['text']
+            # Clean response to remove LaTeX/Markdown formatting issues
+            content = clean_llm_response(raw_content, log_changes=True)
+            print(f"[DEBUG] Raw length: {len(raw_content)}")
+            print(f"[DEBUG] Cleaned length: {len(content)}")
+            print(f"[DEBUG] First 200 chars: {content[:200]}")
+
             
             # Extract usage statistics
             usage = response_body['usage']
@@ -185,6 +202,7 @@ class BedrockClient:
             logger.error(f"Bedrock API error: {e}", exc_info=True)
             raise
     
+
     def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """
         Calculate total cost from token usage.

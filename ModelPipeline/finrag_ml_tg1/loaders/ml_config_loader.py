@@ -711,17 +711,44 @@ class MLConfig:
 
     ## ========= New Methods for Lambda Environment Support ==========
 
+    """
+    NOTE: Should try for this:
+    ECS: Can set MODEL_PIPELINE_ROOT=/var/task or whatever path they use
+    Lambda: Can set MODEL_PIPELINE_ROOT=/opt
+    K8s: Can set MODEL_PIPELINE_ROOT=/app/code
+    """
+
     def _find_model_pipeline_root(self) -> Path:
         """
         Find ModelPipeline root directory.
-        Supports both local development and Lambda environments.
+        Supports local development, Docker, Lambda, ECS, K8s, and other cloud environments.
         
-        Search order:
-        1. Lambda environment (/var/task/ModelPipeline)
-        2. File's own path tree (where this .py file lives)
-        3. Current working directory tree
+        Search order (highest to lowest priority):
+        1. MODEL_PIPELINE_ROOT environment variable (explicit configuration)
+        2. Lambda environment (/var/task/ModelPipeline or LAMBDA_TASK_ROOT)
+        3. File's own path tree (where this .py file lives)
+        4. Current working directory tree
+        
+        Cloud deployment examples:
+        - Docker: MODEL_PIPELINE_ROOT=/app
+        - ECS: MODEL_PIPELINE_ROOT=/var/task
+        - Lambda: Auto-detected via AWS_LAMBDA_FUNCTION_NAME
+        - K8s: MODEL_PIPELINE_ROOT=/app/code
         """
-        # Lambda detection
+        
+        # Strategy 0: Check environment variable FIRST (highest priority)
+        # This allows explicit configuration for any cloud platform
+        env_root = os.getenv('MODEL_PIPELINE_ROOT')
+        if env_root:
+            model_pipeline = Path(env_root)
+            if model_pipeline.exists():
+                print(f"[DEBUG] ✓ Using MODEL_PIPELINE_ROOT from environment: {model_pipeline}")
+                return model_pipeline
+            else:
+                print(f"[WARNING] MODEL_PIPELINE_ROOT set to {env_root} but path does not exist")
+                # Continue to fallback strategies instead of failing immediately
+        
+        # Strategy 1: Lambda environment detection
         if os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
             lambda_task_root = Path(os.getenv('LAMBDA_TASK_ROOT', '/var/task'))
             model_pipeline = lambda_task_root / "ModelPipeline"
@@ -731,7 +758,7 @@ class MLConfig:
             else:
                 print(f"[WARNING] Lambda env detected but ModelPipeline not found at {model_pipeline}")
         
-        # Strategy 1: Check file's own location first
+        # Strategy 2: Check file's own location
         # If this file is at: ModelPipeline/finrag_ml_tg1/loaders/ml_config_loader.py
         # Then walk up from file location
         file_path = Path(__file__).resolve()
@@ -740,19 +767,20 @@ class MLConfig:
                 print(f"[DEBUG] ✓ Found ModelPipeline via file path: {parent}")
                 return parent
         
-        # Strategy 2: Check current working directory (for notebook usage)
+        # Strategy 3: Check current working directory (for notebook usage)
         current = Path.cwd()
         for parent in [current] + list(current.parents):
             if parent.name == "ModelPipeline":
                 print(f"[DEBUG] ✓ Found ModelPipeline via cwd: {parent}")
                 return parent
         
-        # Strategy 3: Failed - provide helpful error
+        # Strategy 4: Failed - provide helpful error with all search paths
         raise RuntimeError(
             f"Cannot find ModelPipeline root directory.\n"
+            f"  Environment variable MODEL_PIPELINE_ROOT: {env_root or 'not set'}\n"
             f"  Searched in file path: {file_path}\n"
             f"  Searched in cwd: {current}\n"
-            f"  Expected 'ModelPipeline' directory in path tree or Lambda /var/task/ModelPipeline"
+            f"  Expected 'ModelPipeline' directory in path tree or set MODEL_PIPELINE_ROOT env var"
         )
 
     # Add new properties (after __init__):
@@ -761,13 +789,59 @@ class MLConfig:
         """Detect if running in AWS Lambda"""
         return bool(os.getenv('AWS_LAMBDA_FUNCTION_NAME'))
 
+
+
+    @property
+    def is_containerized_environment(self) -> bool:
+        """
+        Detect if running in a containerized environment (Docker, ECS, K8s, etc.)
+        
+        Returns True if:
+        - MODEL_PIPELINE_ROOT env var is set (explicit container config), OR
+        - Running in Lambda
+        
+        Returns:
+            bool: True if in container/cloud, False if local dev
+        """
+        return bool(os.getenv('MODEL_PIPELINE_ROOT')) or self.is_lambda_environment
+
     @property
     def data_loading_mode(self) -> str:
         """
         Determine data loading strategy.
         Returns: 'LOCAL_CACHE' or 'S3_STREAMING'
+        
+        Priority:
+        1. Explicit DATA_LOADING_MODE env var (if set) → use that
+        2. Lambda → S3_STREAMING (always)
+        3. Container (Docker/ECS/K8s) → S3_STREAMING (default)
+        4. Local dev → LOCAL_CACHE (default)
+        
+        Override examples:
+        - Force local cache in Docker: DATA_LOADING_MODE=LOCAL_CACHE
+        - Force S3 in local dev: DATA_LOADING_MODE=S3_STREAMING
         """
-        return 'S3_STREAMING' if self.is_lambda_environment else 'LOCAL_CACHE'
+        # Explicit override takes highest priority
+        explicit_mode = os.getenv('DATA_LOADING_MODE')
+        if explicit_mode:
+            print(f"[DEBUG] ✓ Data loading mode explicitly set: {explicit_mode}")
+            return explicit_mode
+        
+        # Lambda always streams from S3 (no local disk)
+        if self.is_lambda_environment:
+            print(f"[DEBUG] ✓ Lambda detected → S3_STREAMING mode")
+            return 'S3_STREAMING'
+        
+        # Containerized environments default to S3 streaming
+        # (containers are typically ephemeral, S3 is more reliable)
+        if self.is_containerized_environment:
+            print(f"[DEBUG] ✓ Container detected → S3_STREAMING mode")
+            return 'S3_STREAMING'
+        
+        # Local development defaults to cache (faster)
+        print(f"[DEBUG] ✓ Local dev detected → LOCAL_CACHE mode")
+        return 'LOCAL_CACHE'
+
 
 # ============================================================================
 # TEST / DEMO

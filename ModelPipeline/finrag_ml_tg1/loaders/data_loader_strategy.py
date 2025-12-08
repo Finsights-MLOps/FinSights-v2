@@ -149,7 +149,7 @@ class S3StreamingLoader(DataLoaderStrategy):
             # Local testing (Windows/Mac/Linux): Use system temp
             self._tmp_cache = Path(tempfile.gettempdir()) / 'finrag_cache'
             print(f"[DEBUG: S3StreamingLoader] Using temp cache: {self._tmp_cache}")
-            print(f"[DEBUG: S3StreamingLoader] This is if-else only for local testing, or mocking. In real Lambda: Uses /tmp/finrag_cache (standard Lambda location), In local testing: Uses C:\\Users\\...\\Temp\\finrag_cache")
+            # print(f"[DEBUG: S3StreamingLoader] This is if-else only for local testing, or mocking. In real Lambda: Uses /tmp/finrag_cache (standard Lambda location), In local testing: Uses C:\\Users\\...\\Temp\\finrag_cache")
 
         
         # Create cache directory

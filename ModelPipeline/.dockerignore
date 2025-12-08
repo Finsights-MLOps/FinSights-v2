@@ -1,0 +1,156 @@
+# ============================================================================
+# .dockerignore for FinRAG Docker Builds
+# Context: ModelPipeline/ (parent of finrag_docker_loc_tg1)
+# Purpose: Exclude unnecessary files to reduce Docker image size and build time
+# ============================================================================
+
+# ============================================================================
+# Git & Version Control
+# ============================================================================
+.git/
+.gitignore
+.github/
+.dvc/
+.dvcignore
+
+# ============================================================================
+# Python Artifacts
+# ============================================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ============================================================================
+# Virtual Environments (ALL of them)
+# ============================================================================
+venv/
+.venv/
+venv_*/
+*/venv_*/
+finrag_ml_tg1/venv_ml_rag/
+serving/backend/venv_backend/
+serving/frontend/venv_frontend/
+
+# ============================================================================
+# IDEs & Editors
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# Notebooks & Experiments (not needed in production containers)
+# ============================================================================
+*.ipynb
+notebooks/
+experiments/
+MLFlow_POC/
+
+# Platform core notebooks - MLinfra spine not needed here
+finrag_ml_tg1/platform_core_notebooks/
+finrag_ml_tg1/validation_notebooks/
+
+# Rag module source tests and isolation tests
+finrag_ml_tg1/rag_modules_src/01_Isolation_Test_NBS/
+finrag_ml_tg1/rag_modules_src/02_LLMEval_Notebooks/
+finrag_ml_tg1/rag_modules_src/03_LambdaRefactor_Tests/
+
+# ============================================================================
+# Large Data Files (should be fetched from S3 at runtime, not baked into image)
+# ============================================================================
+*.csv
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Data directories
+data/
+data_cache/
+DataPipeline/
+Edgar-Sentences-SDK/raw_data/
+
+# Stage 3 vtable, embed large table, analysis exports, trial data incr
+finrag_ml_tg1/data_cache/embeddings/
+finrag_ml_tg1/data_cache/stage3_s3vectors/
+finrag_ml_tg1/data_cache/analysis_exports/
+finrag_ml_tg1/data_cache/trial_data_incr/
+
+# ============================================================================
+# Model Weights (download from S3, not bake into image)
+# ============================================================================
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+models/
+checkpoints/
+
+# ============================================================================
+# Logs & Temporary Files
+# ============================================================================
+*.log
+logs/
+.log/
+
+# ============================================================================
+# Build Artifacts
+# ============================================================================
+dist/
+build/
+*.whl
+
+# ============================================================================
+# Lambda & Cloud Deployment Assets (not needed for Docker)
+# ============================================================================
+lambda_assets/
+src_aws_etl/
+
+# ============================================================================
+# Sevalla & Demo Assets (deployment-specific, not for Docker image)
+# ============================================================================
+sevalla_assets/
+finrag_ml_tg1/demo_images_export/
+
+# ============================================================================
+# Design & Documentation (not needed in runtime image)
+# ============================================================================
+design_docs/
+
+# ============================================================================
+# Testing (not needed in production containers)
+# ============================================================================
+tests/
+test_*/
+.coverage
+htmlcov/
+
+# ============================================================================
+# Docker Files Themselves (prevent recursion)
+# ============================================================================
+finrag_docker_loc_tg1/
+docker-compose.yml
+*.Dockerfile
+
+# ============================================================================
+# Secrets & Environment Files (use env_file in docker-compose instead)
+# ============================================================================
+.env
+.env.*
+aws_credentials.env
+secrets.env
+
+# ============================================================================

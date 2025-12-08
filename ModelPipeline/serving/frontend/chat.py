@@ -101,10 +101,6 @@ def handle_user_input(client: FinSightClient) -> None:
             st.error("[Hey!] Question must be at least 10 characters long.")
             return
         
-        if len(prompt) > 500:
-            st.error("[Hey!] Question must be less than 500 characters.")
-            return
-        
         # Add user message to history
         add_user_message(prompt)
         
@@ -132,7 +128,9 @@ def handle_user_input(client: FinSightClient) -> None:
                 answer = result.get("answer", "")
                 metadata = result.get("metadata", {})
                 
-                st.markdown(answer)
+                # markdown -- issues? lets attempt.
+                # st.markdown(answer)
+                st.text(answer)
                 
                 # Add to history
                 add_assistant_message(

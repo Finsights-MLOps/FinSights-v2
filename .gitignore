@@ -213,7 +213,11 @@ ModelPipeline/finrag_ml_tg1/.aws_secrets/aws_credentials.env
 /personal_notes_mjs
 personal_notes_mjs/
 
-# ModelPipeline/sevalla_assets
-# ModelPipeline/sevalla_assets/*
+# Ignoring sevalla assets and demo images export - as nixpacks monorepo builds fail.
+ModelPipeline/sevalla_assets
+ModelPipeline/sevalla_assets/*
 
 ModelPipeline/sevalla_assets/SEVALLA_UI_GUIDE.md
+
+## API Keys / Secrets for docker local env
+ModelPipeline/finrag_docker_loc_tg1/secrets.env
