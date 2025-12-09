@@ -74,7 +74,12 @@ This document chronicles the entire development journey of FinRAG, emphasizing p
 - Query Economics: Open queries (no filters) cost $0.10 per 10K queries. Filtered queries (metadata pushdown) cost $0.05 per 10K queries — 50% cheaper due to reduced search space.
 - Production Projections: Academic workload (1M queries/month mixed regime) = ~$7-10/month total. Scales linearly; 10M queries = $70-100/month, making S3 Vectors 99% cheaper than managed vector DBs (Pinecone $70/month baseline for 200K vectors alone).
 - Cost Optimization Strategy: Parquet files as cold storage ($0.023/GB), S3 Vectors as hot query layer. Enables sub-$15/month academic project budget while maintaining production-grade semantic search.
-
+- !! Massive enhancements: Incremental updates via filter-based insertion (cik_filter, year_filter for new data).
+- Intelligent set of 3-4 embedding execution analytics reports, missing embeddings, insignificantly leftover embeddings such as 1-10 outlier detection, index inspection utilities, etc.
+- **Part 1 to 3 updates:** All platform spine code refactored, and simply 'called' and run on notebooks, for beautiful outputs and visual progress.
+- Lazy Polars: Memory Efficiency Over Speed. 
+  - Updating the way Polart handles large tables to prevent every sort of kernel crash that has been faced, to enable laptop development with less RAM availability and also to support Docker without excess RAM. 
+  - scan_parquet() → filter() → collect() handles 469K sentences and tons of embeddings, joins, without loading full tables into RAM.
 ---
 
 

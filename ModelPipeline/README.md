@@ -33,7 +33,7 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 
 ---
 
-## Repository Navigation
+## Repository Navigation & Key Resources
 
 ### Start easily here: 
 1. **[Quick Start with Docker! (RECOMMENDED)](finrag_docker_loc_tg1/LOC_DOCKER_README.md)** → Local Docker-based setup for easy launch of backend + frontend.
@@ -43,12 +43,6 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 ### CI/CD Process (or) Cloud Deployment Starts here:
 1. **[AWS Cloud Deployment Guide](./finrag_docker_loc_tg1_aws/ECS_DEPLOYMENT_GUIDE.md)** → Step-by-step ECS deployment instructions. It explains how GitHub Actions workflow (`deploy-ecs.yml`) automatically deploys your FinSights application to AWS ECS.
 
-### Monitoring:
-- Please refer to **[AWS Log Monitoring & Analytics Notebook](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md)** for details on how we monitor logs, usage patterns, and cost trends using AWS SageMaker Studio notebooks.
-- The system monitors: **Query & Token Analysis Plots + Tables, Overall query history, Model Usage Distribution Analysis, Efficiency, Volume/Reliability, LLM-Cost Analytics** in our plots and tables.
-- At a raw level, we track input, output, total tokens, cost, context length, processing times in ms, errors and types, and the JSON bodies: **context-assembled** files for queries, and the complete **response** body from LLMs.
-- We have them all streamed directly to S3 buckets as the centralized location. It has logs/, contexts/, responses/ folders.
-
 ### **Documentation**
 - **[ARCHITECTURE.md](finrag_ml_tg1/ARCHITECTURE.md)** → Directory structure + pipeline flow diagrams
 - **[IMPLEMENTATION_GUIDE.md](finrag_ml_tg1/IMPLEMENTATION_GUIDE.md)** → Detailed technical implementation (Parts 1-10)
@@ -56,8 +50,20 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 - **[LLMOPS_TECHNICAL_COMPLIANCE.md](finrag_ml_tg1/LLMOPS_TECHNICAL_COMPLIANCE.md)** → LLM engineering standards, Test suites, LLM usage compliance, and best practices
 
 ### **Code Organization**
-- **`platform_core/`** → Data lifecycle management (embedding generation, S3 provisioning, gold test curation)
-- **`rag_modules_src/`** → Production RAG components (entity extraction, retrieval, synthesis)
+**Feature-Cloud Data preparation (or) Retrieval Spine Module**:
+  - **`platform_core/`** → ML Feature lifecycle management (smart caching, Stage 1-2-3 tables, Lean tables, embedding generation, embedding execution histories, S3 provisioning, PutVectors API for Vector Index at S3, etc.)
+**Core App-Serving RAG Modules (Minimal Packaging)**:
+  - **`rag_modules_src/`** → Production RAG components (entity extraction, retrieval, synthesis)
+**Isolation/Integration Tests, RAG Tests, ML-NLP heavy modules**:
+- **`validation_notebooks/`**: 3 Phase Gold tests, Manual grounding tests displayed side-by-side, RAG pipeline integration tests, S3 Vector tests. Complete isolation or 'conductor' tests which have chained 2-5 modules, etc.
+
+### Analytics, Logs & Drift Monitoring:
+- Please refer to **[AWS Log Monitoring & Analytics Notebook](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md)** for details.
+- **[Model Retraining Concerns](finrag_docker_loc_tg1_aws/AWS_LogMonitoring_Analytics.md##23)** are mentioned here.
+
+### Model Optimization:
+- For model (RAG pipeline memory/IO) optimization, our complete document is here: **[TechNotes Memory Handling](finrag_ml_tg1/TechNotes_MemoryExp_Handling.md)**
+- Read our strategic design and performance-cost decisions here: **[Performance & Cost Analysis](finrag_ml_tg1/Performance_Cost_Analysis.md)**
 
 ### Important Module Contracts to get familiar with:
 - [Platform Core Contract](finrag_ml_tg1/platform_core/platform_core_contract.py)
@@ -66,17 +72,11 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 - [Sentence Expander Contract](finrag_ml_tg1/rag_modules_src/rag_pipeline/sentence_expander_contract.py)
 - [Synthesis Pipeline Contract](finrag_ml_tg1/rag_modules_src/synthesis_pipeline/models_contract.py)
 
-
 ### **Key Artifacts**
 - **Config**: `ml_config.yaml`, `.aws_secrets/` (credentials), `environments/` (specs)
 - **Outputs**: `rag_modules_src\exports` (proper final exports), `data_cache/` (intermediate results), `test_outputs/` (some validation artifacts). 
 
 ---
-
-## Quick Start
-1. Our current quick demo is by viewing the exports, and the final-serve notebook: `ModelPipeline\finrag_ml_tg1\rag_modules_src\01_Isolation_Test_NBS\08_ITest_Start_To_LLM_Serve.ipynb`
-2. We plan on clean integration with a front-end soon.
-
 
 ## Quick Screenshots/Demo:
 1. As a short example, we have the following screenshots or attachments below. One would display a custom rendering of DOM object inside JupyterServe so that you have a very well formatted, pretty display. We currently have a notebook where we serve display tables of a couple of gold test queries. 

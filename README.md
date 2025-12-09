@@ -1,7 +1,6 @@
 # FinSights
 
 #### Course Project (MLOps IE7374) - FinSights.
-
 <!-- - Building an AI-powered financial analysis pipeline for structured KPI extraction and explainable reporting from 10-K filings SEC(Securities and Exchange Commission). -->
 
 - FinSights is a production-grade financial document intelligence system. The system processes SEC 10-K filings to enable sophisticated question-answering capabilities for financial analysts and portfolio managers through a hybrid retrieval architecture.
