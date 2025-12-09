@@ -56,8 +56,16 @@ FinRAG is out attempt at a production-grade financial intelligence platform that
 - **[LLMOPS_TECHNICAL_COMPLIANCE.md](finrag_ml_tg1/LLMOPS_TECHNICAL_COMPLIANCE.md)** → LLM engineering standards, Test suites, LLM usage compliance, and best practices
 
 ### **Code Organization**
-- **`platform_core_notebooks/`** → Data lifecycle management (embedding generation, S3 provisioning, gold test curation)
+- **`platform_core/`** → Data lifecycle management (embedding generation, S3 provisioning, gold test curation)
 - **`rag_modules_src/`** → Production RAG components (entity extraction, retrieval, synthesis)
+
+### Important Module Contracts to get familiar with:
+- [Platform Core Contract](finrag_ml_tg1/platform_core/platform_core_contract.py)
+- [Rag Pipeline Contract](finrag_ml_tg1/rag_modules_src/rag_pipeline/01_pipeline_contract.py)
+- [S3 Retriever Contract](finrag_ml_tg1/rag_modules_src/rag_pipeline/s3_retriever_contract.py)
+- [Sentence Expander Contract](finrag_ml_tg1/rag_modules_src/rag_pipeline/sentence_expander_contract.py)
+- [Synthesis Pipeline Contract](finrag_ml_tg1/rag_modules_src/synthesis_pipeline/models_contract.py)
+
 
 ### **Key Artifacts**
 - **Config**: `ml_config.yaml`, `.aws_secrets/` (credentials), `environments/` (specs)

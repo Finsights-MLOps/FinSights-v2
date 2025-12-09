@@ -79,7 +79,7 @@ ENV/
 # DEVELOPMENT DIRECTORIES (not needed in Lambda)
 # ============================================================================
 tests/
-platform_core_notebooks/
+platform_core/
 demo_images_export/
 
 # ============================================================================

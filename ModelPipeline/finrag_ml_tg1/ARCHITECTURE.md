@@ -15,7 +15,7 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
  ┣ 📂 data_cache/                               # Local data storage for intermediate processing results
  ┣ 📂 environments/                             # Conda/Python environment specifications and dependencies
  ┣ 📂 loaders/                                  # Data loading utilities and ETL ingestion modules
- ┣ 📂 platform_core_notebooks/                  # Core development notebooks for data lifecycle management
+ ┣ 📂 platform_core/                  # Core development notebooks for data lifecycle management
  ┣ 📂 rag_modules_src/                          # Production RAG pipeline components (query-time execution)
  ┣ 📂 venv_ml_rag/                              # Python virtual environment (local development)
  ┣ 📜 __init__.py                               # Python package initialization
@@ -38,7 +38,7 @@ Example: `ModelPipeline\finrag_ml_tg1\rag_modules_src\synthesis_pipeline\models.
 
 ```
 
-📦 platform_core_notebooks/
+📦 platform_core/
  ┣ 📜 01_Stage2_EmbeddingGen.ipynb              # Stage 2 meta table creation + embedding generation pipeline
  ┣ 📜 02_EmbeddingAnalytics.ipynb               # Vector-metadata parity, staleness checks, integration audits
  ┣ 📜 03_S3Vector_TableProvisioning.ipynb       # S3 Vector store schema setup and initialization
@@ -155,7 +155,7 @@ User Raw Query
   Uses: environments/requirements.txt
   Size: ~2-3GB
   Purpose: Notebooks, eval metrics, torch, transformers
-  When: Running platform_core_notebooks/, validation work
+  When: Running platform_core/, validation work
 ```
 
 - ENVIRONMENT 2: venv_serving (MINIMAL - New for Deployment)

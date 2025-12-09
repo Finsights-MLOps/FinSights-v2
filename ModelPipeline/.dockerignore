@@ -59,7 +59,7 @@ experiments/
 MLFlow_POC/
 
 # Platform core notebooks - MLinfra spine not needed here
-finrag_ml_tg1/platform_core_notebooks/
+finrag_ml_tg1/platform_core/
 finrag_ml_tg1/validation_notebooks/
 
 # Rag module source tests and isolation tests

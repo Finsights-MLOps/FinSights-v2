@@ -113,7 +113,7 @@
  ┃ ┗ 📜 environment.yml                      # Conda environment spec
  ┃
  ┣ 📂 ModelPipeline/                         # LLM/RAG infrastructure & validation (finrag_ml_tg1/)
- ┃ ┣ 📂 platform_core_notebooks/             # Embedding generation, S3 Vectors provisioning, Gold test curation
+ ┃ ┣ 📂 platform_core/             # Embedding generation, S3 Vectors provisioning, Gold test curation
  ┃ ┃ ┣ 📜 01_Stage2_EmbeddingGen.ipynb       # Stage 2 meta table + embedding pipeline
  ┃ ┃ ┣ 📜 02_EmbeddingAnalytics.ipynb        # Vector-metadata parity, staleness audits
  ┃ ┃ ┣ 📜 03_S3Vector_TableProvisioning.ipynb

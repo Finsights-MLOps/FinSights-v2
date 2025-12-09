@@ -23,7 +23,6 @@ The flow: **Clone -> Set up AWS creds -> Navigate once -> Build + Start**
 **Full Build + Start commands:**
    - docker compose up --build
 
-
 - This builds both backend and frontend images, then starts the containers. 
 
 ---

@@ -146,7 +146,7 @@ Average Cosine: 0.675        ← GOOD
 
 ### P.S.: About minimal tech debt:
 - 95% of modules: adapters, rag modules, configs loader modules, data loaders/streamers, orchestrator, synthesis modules, etc. and lightweight logging: are perfectly modular.
-- In one module, conceptually, 'Retrieval backend spines' (`platform_core_notebooks`), I recognize some of the notebook logics aren't fully modularized python scripts - that's my tech debt, but with my current budget hours and with every other modules' work, research volume, across many weeks and months, I couldn't handle finishing it. There are only 2-4 core logics to be modularized.
+- In one module, conceptually, 'Retrieval backend spines' (`platform_core`), You will observe that these are independently called, config-driven, slow-running 'infra' setup operations. They are just run in notebooks for utility but the code logic is all modular and isolated.
 - For now, the notebooks are well-structured with clear exec flows, documented, produce high-quality visual outputs when executed. They have helpful embedding-audit execution history, they have analytic queries and tabular logs quickly after doing the rag's necessary, time-taking, cloud operations - PutVectors or Generate embeds operations. These are only dormant 'infra setup' notebooks, they are not iteratively run for every query.
 - The scientific coding notebook approach is still very valuable here. They are very cleanly explained in markdown cells.
 - These are also not run for every query, they are 'Preparation' infrastructure and not daily 'Serving' infrastructure. My philosophy is that, these are handled once a year, twice a year or on-demand.
