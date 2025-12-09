@@ -182,6 +182,7 @@ docker push 729472661729.dkr.ecr.us-east-1.amazonaws.com/finsights-frontend:late
       "Effect": "Allow",
       "Action": [
         "s3vectors:QueryVectors",
+        "s3vectors:GetVectors",
         "s3vectors:GetVectorIndex",
         "s3vectors:DescribeVectorIndex",
         "s3vectors:ListVectorIndexes"

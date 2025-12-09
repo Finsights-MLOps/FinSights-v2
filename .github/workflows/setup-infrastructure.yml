@@ -177,6 +177,7 @@ jobs:
                   "Effect": "Allow",
                   "Action": [
                     "s3vectors:QueryVectors",
+                    "s3vectors:GetVectors",
                     "s3vectors:GetVectorIndex",
                     "s3vectors:DescribeVectorIndex",
                     "s3vectors:ListVectorIndexes"
