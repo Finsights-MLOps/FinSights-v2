@@ -1,4 +1,4 @@
-name: Deploy to ECS with Service Discovery
+name: ModelPipeline Deployment (Build and Deploy frontend and backend on AWS)
 
 on:
   push:
