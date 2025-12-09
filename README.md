@@ -94,6 +94,9 @@
 
 8. The `ModelPipeline/serving/` layer implements a three-tier service architecture separating concerns between presentation (Streamlit frontend), application (FastAPI backend), and business logic (ML orchestrator). Backend wraps the ML pipeline with RESTful HTTP endpoints while frontend provides a stateless chat interface.
     - Setup is automated via `setup_finrag` scripts with UV package manager for fast dependency resolution. One-click startup through `start_finrag` scripts launches both services with automatic browser opening. See [Setup Instructions](ModelPipeline/SETUP_README.md) for complete deployment guide.
+    - Update! The above quick redirect and links, easily point to 2 better, stronger approaches.
+    - We have complete automated CI-CD setup workflows that show how the applications required Dockerized images deploy on ECS serverless Fargate. And once that's done, you can quickly access the public serving frontend URL or IP, which makes it much easier to access the frontend application.
+    - Secondly, we also have the proper edge deployment, which says the same dockerization approach can spin up on the local machine and you can access the front-end application through your machine. It will still connect the relative cloud services components, inference services, data services to the cloud, such as S3 and AWS Bedrock.
 
 9. System achieves $0.017 - $0.025 per query cost efficiency through Parquet-based vector storage (99% savings vs managed databases), processes complex multi-company queries, and maintains comprehensive logging and audit trails across all tiers for production-grade observability.
     - Architecture supports independent scaling of frontend and backend services, demonstrates MLOps best practices including dependency injection, contract-driven development with Pydantic validation, and separation of ML inference from HTTP serving logic.
