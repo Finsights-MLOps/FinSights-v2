@@ -43,7 +43,6 @@ PROJECT: FinSights_Log_Analytics
 
 - IAM:
   - Execution Role:   AmazonSageMakerUserIAMExecutionRole
-  - Role ARN:         arn:aws:iam::729472661729:role/service-role/AmazonSageMakerUserIAMExecutionRole
 
 - COMPUTE:
   - Instance Type:    sc.t3.medium (2 vCPU, 4GB RAM)
