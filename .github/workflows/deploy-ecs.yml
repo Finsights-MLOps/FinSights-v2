@@ -20,7 +20,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REGISTRY: 729472661729.dkr.ecr.us-east-1.amazonaws.com
-  ECS_CLUSTER: finsights-cluster(new)
+  ECS_CLUSTER: finsights-cluster-new
   
   # Backend configuration
   BACKEND_ECR_REPOSITORY: finsights-backend
