@@ -7,6 +7,7 @@ from datetime import datetime
 import re
 import hashlib
 from bs4 import BeautifulSoup
+from pathlib import Path
 
 # Download sentence tokenizer
 nltk.download('punkt')
@@ -30,7 +31,7 @@ start_year = int(start_date_range[:4])
 end_year = int(end_date_range[:4])
 years = list(range(start_year, end_year + 1))
 
-output_dir = "scripts/sentence/sec_rag_data/"
+output_dir = Path(__file__).parent / "sentence_data"
 os.makedirs(output_dir, exist_ok=True)
 output_file_parquet = os.path.join(output_dir, "10k_sentences_extracted.parquet")
 output_file_csv = os.path.join(output_dir, "10k_sentences_extracted.csv")

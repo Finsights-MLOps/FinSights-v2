@@ -1,0 +1,37 @@
+name: Edgar Sentences
+
+on: 
+  push:
+    paths:
+      - 'Edgar-Sentences-SDK/**'
+  workflow_dispatch:
+
+jobs:
+  edgar-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Edgar ingestion
+        run: python EdgarSentences-SDK/SentenceIngestion.py
+
+      - name: Run Edgar Cleaning
+        run: python EdgarSentences-SDK/SentenceCleaning.py
+
+      - name: Run Edgar Validation
+        run: python EdgarSentences-SDK/SentenceValidation.py
+
+      - name: Run Edgar Loading
+        run: python EdgarSentences-SDK/SentenceLoading.py
